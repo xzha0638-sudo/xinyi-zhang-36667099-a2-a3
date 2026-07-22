@@ -1,29 +1,19 @@
-# Xinyi Zhang 36667099 A2
+# NoMash Library Topic 7
 
-This repository is for Assignment 2.
+This project reuses the earlier NoMash Library structure and adds Firebase authentication for Lab Topic 7.
 
-## Student Details
+## Setup
 
-- Name: Xinyi Zhang
-- Student Number: 36667099
+1. Run npm install
+2. Copy .env.example to .env
+3. Paste the Firebase web app values from your Firebase Console into .env
+4. Run npm run dev
 
-## Suggested Repository Sharing
+## Pages for screenshots
 
-Share this repository with your tutor as soon as you begin the assignment.
+- /firebase-register: registration page
+- /firebase-signin: sign-in page with role selection
+- /role-portal: protected page showing the signed-in user and selected role
+- /firebase-logout: logout page with current user state
 
-## Suggested Commit Strategy
-
-- Make regular commits across multiple days.
-- Keep at least 3 code commits.
-- Avoid doing all commits within a 48-hour window.
-
-## Assignment Reminders
-
-- Build a basic web application that completes Business Requirements A, B, and C.
-- Fill in the submission template.
-- Record a short demo video and upload it to the required Google Drive.
-- Declare any permitted non-code AI use in the submission template.
-
-## Project Structure
-
-You can add your application files here as you develop the assignment.
+Open the browser developer console while testing. The app logs the current Firebase user on sign-in and sign-out to support the lab screenshots.
