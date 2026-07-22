@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue'
-import { currentUser } from '@/auth'
+import { activeRole, currentProfile, currentUser } from '@/auth'
 
 const signedIn = computed(() => Boolean(currentUser.value))
+const canAccessStaffHub = computed(() => ['Librarian', 'Manager'].includes(activeRole.value))
 </script>
 
 <template>
@@ -11,7 +12,7 @@ const signedIn = computed(() => Boolean(currentUser.value))
       <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
         <div>
           <div class="brand-mark fw-bold">NoMash Library</div>
-          <div class="text-muted small">Topic 7 Lab · Firebase Authentication</div>
+          <div class="text-muted small">Campus catalog, memberships, and role-based services</div>
         </div>
 
         <ul class="nav nav-pills gap-2">
@@ -19,18 +20,34 @@ const signedIn = computed(() => Boolean(currentUser.value))
             <router-link to="/" class="nav-link" active-class="active">Home</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/firebase-register" class="nav-link" active-class="active">
-              FireRegister
-            </router-link>
+            <router-link to="/catalog" class="nav-link" active-class="active">Catalog</router-link>
           </li>
           <li class="nav-item">
+            <router-link to="/join" class="nav-link" active-class="active">Join</router-link>
+          </li>
+          <li v-if="!signedIn" class="nav-item">
+            <router-link to="/firebase-register" class="nav-link" active-class="active">
+              Register
+            </router-link>
+          </li>
+          <li v-if="!signedIn" class="nav-item">
             <router-link to="/firebase-signin" class="nav-link" active-class="active">
-              Firebase Sign in
+              Sign in
             </router-link>
           </li>
           <li v-if="signedIn" class="nav-item">
-            <router-link to="/role-portal" class="nav-link" active-class="active">
-              Role Portal
+            <router-link to="/dashboard" class="nav-link" active-class="active">
+              Dashboard
+            </router-link>
+          </li>
+          <li v-if="canAccessStaffHub" class="nav-item">
+            <router-link to="/staff-hub" class="nav-link" active-class="active">
+              Staff Hub
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/security" class="nav-link" active-class="active">
+              Security
             </router-link>
           </li>
           <li v-if="signedIn" class="nav-item">
@@ -39,6 +56,12 @@ const signedIn = computed(() => Boolean(currentUser.value))
             </router-link>
           </li>
         </ul>
+
+        <div v-if="signedIn" class="status-card navbar-profile">
+          <div class="text-muted small mb-1">Signed in</div>
+          <div class="fw-semibold">{{ currentProfile?.displayName || currentUser?.email }}</div>
+          <div class="role-badge mt-2">{{ activeRole || 'Member' }}</div>
+        </div>
       </div>
     </div>
   </nav>

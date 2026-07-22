@@ -1,21 +1,39 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { authReadyPromise, currentUser } from '@/auth'
-import AccessDeniedView from '@/views/AccessDeniedView.vue'
-import FirebaseLogoutView from '@/views/FirebaseLogoutView.vue'
-import FirebaseRegisterView from '@/views/FirebaseRegisterView.vue'
-import FirebaseSigninView from '@/views/FirebaseSigninView.vue'
-import HomeView from '@/views/HomeView.vue'
-import RolePortalView from '@/views/RolePortalView.vue'
+import { activeRole, authReadyPromise, currentUser } from '@/auth'
+
+const HomeView = () => import('@/views/HomeView.vue')
+const DataLabView = () => import('@/views/DataLabView.vue')
+const LoginView = () => import('@/views/LoginView.vue')
+const FirebaseRegisterView = () => import('@/views/FirebaseRegisterView.vue')
+const FirebaseSigninView = () => import('@/views/FirebaseSigninView.vue')
+const RolePortalView = () => import('@/views/RolePortalView.vue')
+const AboutView = () => import('@/views/AboutView.vue')
+const FirebaseLogoutView = () => import('@/views/FirebaseLogoutView.vue')
+const AccessDeniedView = () => import('@/views/AccessDeniedView.vue')
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
+  { path: '/catalog', name: 'Catalog', component: DataLabView },
+  { path: '/join', name: 'Join', component: LoginView },
   { path: '/firebase-register', name: 'FirebaseRegister', component: FirebaseRegisterView },
   { path: '/firebase-signin', name: 'FirebaseSignin', component: FirebaseSigninView },
   {
-    path: '/role-portal',
-    name: 'RolePortal',
+    path: '/dashboard',
+    alias: '/role-portal',
+    name: 'Dashboard',
     component: RolePortalView,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/staff-hub',
+    name: 'StaffHub',
+    component: AboutView,
+    meta: { requiresAuth: true, allowedRoles: ['Librarian', 'Manager'] }
+  },
+  {
+    path: '/security',
+    name: 'Security',
+    component: AboutView
   },
   {
     path: '/firebase-logout',
@@ -39,6 +57,14 @@ router.beforeEach(async (to) => {
     return {
       name: 'FirebaseSignin',
       query: { redirect: to.fullPath, denied: 'true' }
+    }
+  }
+
+  const allowedRoles = to.meta.allowedRoles || []
+  if (allowedRoles.length && !allowedRoles.includes(activeRole.value)) {
+    return {
+      name: 'AccessDenied',
+      query: { reason: 'role', redirect: to.fullPath }
     }
   }
 

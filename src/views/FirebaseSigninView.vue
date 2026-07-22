@@ -2,20 +2,21 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
-import { activeRole, roles, setActiveRole } from '@/auth'
+import { refreshCurrentProfile } from '@/auth'
 import { auth, isFirebaseConfigured } from '@/firebase'
 
 const route = useRoute()
 const router = useRouter()
 
-const email = ref('')
+const email = ref(route.query.email || '')
 const password = ref('')
-const selectedRole = ref(activeRole.value || roles[0])
 const loading = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 
 const signInUser = async () => {
   errorMessage.value = ''
+  successMessage.value = ''
 
   if (!isFirebaseConfigured) {
     errorMessage.value = 'Please add your Firebase web app values to the .env file first.'
@@ -25,14 +26,10 @@ const signInUser = async () => {
   loading.value = true
 
   try {
-    const credential = await signInWithEmailAndPassword(auth, email.value, password.value)
-    setActiveRole(selectedRole.value)
-    console.log('Current Firebase user after sign in:', {
-      uid: credential.user.uid,
-      email: credential.user.email,
-      role: selectedRole.value
-    })
-    router.push(route.query.redirect || { name: 'RolePortal' })
+    await signInWithEmailAndPassword(auth, email.value, password.value)
+    const profile = refreshCurrentProfile()
+    successMessage.value = `Welcome back${profile?.displayName ? `, ${profile.displayName}` : ''}.`
+    router.push(route.query.redirect || { name: 'Dashboard' })
   } catch (error) {
     errorMessage.value = error.code + ': ' + error.message
   } finally {
@@ -45,14 +42,14 @@ const signInUser = async () => {
   <section class="page-section">
     <div class="container">
       <div class="content-card form-card p-4 p-md-5">
-        <span class="section-label mb-3">Task 7.1 + 7.2</span>
-        <h1 class="h2 mt-3">Firebase sign in</h1>
+        <span class="section-label mb-3">Authentication</span>
+        <h1 class="h2 mt-3">Sign in to your library account</h1>
         <p v-if="route.query.denied" class="alert alert-warning">
-          Access denied. Please sign in first to open the protected page.
+          That page is protected. Sign in first, then we will return you to the page you wanted.
         </p>
         <p class="text-muted">
-          Open the browser developer console before clicking Sign in so the current user is visible
-          in your screenshot.
+          Your role is loaded from the profile linked to your email address, so there is no
+          separate role picker at sign-in time.
         </p>
 
         <form @submit.prevent="signInUser">
@@ -79,13 +76,7 @@ const signInUser = async () => {
             />
           </div>
 
-          <div class="mb-3">
-            <label for="signin-role" class="form-label">Role for the system demo</label>
-            <select id="signin-role" v-model="selectedRole" class="form-select">
-              <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
-            </select>
-          </div>
-
+          <p v-if="successMessage" class="alert alert-success">{{ successMessage }}</p>
           <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
 
           <button class="btn btn-dark" type="submit" :disabled="loading">

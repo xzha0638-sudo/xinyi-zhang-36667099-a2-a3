@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "title": "Moonlight at Monash",
+    "author": "Xinyi Zhang",
+    "genre": "Contemporary fiction",
+    "year": 2024,
+    "branch": "Clayton",
+    "summary": "A campus story about balancing study, work, and friendship while discovering a local library tradition.",
+    "featured": true,
+    "availableCopies": 8
+  },
+  {
+    "id": 2,
+    "title": "The Quiet Shelf",
+    "author": "Nora Ellis",
+    "genre": "Literary mystery",
+    "year": 2022,
+    "branch": "Caulfield",
+    "summary": "A librarian pieces together hidden notes, overdue books, and a vanished bookmark that changed a reading club forever.",
+    "featured": true,
+    "availableCopies": 4
+  },
+  {
+    "id": 3,
+    "title": "Code & Candles",
+    "author": "Ari Patel",
+    "genre": "Inspirational memoir",
+    "year": 2023,
+    "branch": "Peninsula",
+    "summary": "A maker-space volunteer shares how small habits, patient debugging, and community support can light a path forward.",
+    "featured": false,
+    "availableCopies": 6
+  },
+  {
+    "id": 4,
+    "title": "Readers of the Bay",
+    "author": "Sophie Tan",
+    "genre": "Community studies",
+    "year": 2021,
+    "branch": "Berwick",
+    "summary": "An illustrated look at how local readers shape a library's programs, collections, and late-night study spaces.",
+    "featured": false,
+    "availableCopies": 10
+  },
+  {
+    "id": 5,
+    "title": "After the Last Return",
+    "author": "Imran Saleh",
+    "genre": "Speculative fiction",
+    "year": 2025,
+    "branch": "Clayton",
+    "summary": "When every borrowed book records a memory, one student learns why some stories should be shared carefully.",
+    "featured": true,
+    "availableCopies": 3
+  },
+  {
+    "id": 6,
+    "title": "The Atlas of Small Worlds",
+    "author": "Mila Novak",
+    "genre": "Travel writing",
+    "year": 2020,
+    "branch": "Caulfield",
+    "summary": "A collection of short essays on neighbourhood bookstores, independent publishers, and the joy of browsing.",
+    "featured": false,
+    "availableCopies": 7
+  }
+]

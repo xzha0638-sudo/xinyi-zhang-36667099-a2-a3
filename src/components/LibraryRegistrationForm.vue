@@ -1,203 +1,198 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import { getRequestEntries, submitLibraryRequest } from '@/libraryStore'
 
 const formData = ref({
-  username: '',
-  password: '',
-  confirmPassword: '',
-  isAustralian: false,
+  fullName: '',
+  email: '',
+  branch: 'Clayton',
+  requestType: 'Membership application',
   reason: '',
-  gender: '',
-  suburb: 'Clayton'
+  agreeToContact: false
 })
 
 const errors = ref({
-  username: null,
-  password: null,
-  confirmPassword: null
+  fullName: null,
+  email: null,
+  reason: null
 })
-const reasonMessage = ref(null)
-const submittedCards = ref([])
+const feedbackMessage = ref('')
+const errorMessage = ref('')
+const requests = ref([])
 
-const validateName = (blur) => {
-  if (formData.value.username.length < 3) {
-    if (blur) errors.value.username = 'Name must be at least 3 characters.'
+const validateFullName = (blur) => {
+  if (formData.value.fullName.trim().length < 3) {
+    if (blur) errors.value.fullName = 'Full name must be at least 3 characters.'
   } else {
-    errors.value.username = null
+    errors.value.fullName = null
   }
 }
 
-const validatePassword = (blur) => {
-  const password = formData.value.password
-  const hasValidPassword =
-    password.length >= 8 &&
-    /[A-Z]/.test(password) &&
-    /[a-z]/.test(password) &&
-    /\d/.test(password) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(password)
-
-  if (!hasValidPassword) {
-    if (blur) {
-      errors.value.password =
-        'Use 8+ characters with uppercase, lowercase, a number and a special character.'
-    }
+const validateEmail = (blur) => {
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)
+  if (!validEmail) {
+    if (blur) errors.value.email = 'Please enter a valid email address.'
   } else {
-    errors.value.password = null
+    errors.value.email = null
   }
 }
 
-const validateConfirmPassword = (blur) => {
-  if (formData.value.password !== formData.value.confirmPassword) {
-    if (blur) errors.value.confirmPassword = 'Passwords do not match.'
+const validateReason = (blur) => {
+  if (formData.value.reason.trim().length < 15) {
+    if (blur) errors.value.reason = 'Reason must be at least 15 characters.'
   } else {
-    errors.value.confirmPassword = null
+    errors.value.reason = null
   }
-}
-
-const validateReason = () => {
-  reasonMessage.value = formData.value.reason.toLowerCase().includes('friend')
-    ? 'Great to have a friend'
-    : null
 }
 
 const clearForm = () => {
   formData.value = {
-    username: '',
-    password: '',
-    confirmPassword: '',
-    isAustralian: false,
+    fullName: '',
+    email: '',
+    branch: 'Clayton',
+    requestType: 'Membership application',
     reason: '',
-    gender: '',
-    suburb: 'Clayton'
+    agreeToContact: false
   }
-  errors.value = { username: null, password: null, confirmPassword: null }
-  reasonMessage.value = null
+  errors.value = { fullName: null, email: null, reason: null }
+}
+
+const refreshRequests = () => {
+  requests.value = getRequestEntries()
 }
 
 const submitForm = () => {
-  validateName(true)
-  validatePassword(true)
-  validateConfirmPassword(true)
+  feedbackMessage.value = ''
+  errorMessage.value = ''
 
-  if (!errors.value.username && !errors.value.password && !errors.value.confirmPassword) {
-    submittedCards.value.push({
-      username: formData.value.username,
-      isAustralian: formData.value.isAustralian,
-      reason: formData.value.reason,
-      gender: formData.value.gender
-    })
-    clearForm()
+  validateFullName(true)
+  validateEmail(true)
+  validateReason(true)
+
+  if (!errors.value.fullName && !errors.value.email && !errors.value.reason) {
+    try {
+      submitLibraryRequest({
+        fullName: formData.value.fullName,
+        email: formData.value.email,
+        branch: formData.value.branch,
+        requestType: formData.value.requestType,
+        reason: formData.value.reason
+      })
+      feedbackMessage.value = 'Your request has been recorded for staff review.'
+      refreshRequests()
+      clearForm()
+    } catch (error) {
+      errorMessage.value = error.message
+    }
   }
 }
+
+onMounted(refreshRequests)
 </script>
 
 <template>
-  <section class="container mt-5">
-    <div class="row">
-      <div class="col-md-8 offset-md-2">
-        <h1 class="text-center">Library Registration Form</h1>
-        <p class="text-center text-muted">Create an account to join our digital library.</p>
-
-        <form @submit.prevent="submitForm" novalidate>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="username" class="form-label">Username</label>
-              <input
-                id="username"
-                v-model="formData.username"
-                class="form-control"
-                @blur="() => validateName(true)"
-                @input="() => validateName(false)"
-              />
-              <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
-            </div>
-
-            <div class="col-md-6">
-              <label for="password" class="form-label">Password</label>
-              <input
-                id="password"
-                v-model="formData.password"
-                type="password"
-                class="form-control"
-                @blur="() => validatePassword(true)"
-                @input="() => validatePassword(false)"
-              />
-              <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="confirm-password" class="form-label">Confirm password</label>
-              <input
-                id="confirm-password"
-                v-model="formData.confirmPassword"
-                type="password"
-                class="form-control"
-                @blur="() => validateConfirmPassword(true)"
-              />
-              <div v-if="errors.confirmPassword" class="text-danger">
-                {{ errors.confirmPassword }}
-              </div>
-            </div>
-
-            <div class="col-md-6 pt-4">
-              <div class="form-check">
-                <input id="isAustralian" v-model="formData.isAustralian" class="form-check-input" type="checkbox" />
-                <label class="form-check-label" for="isAustralian">Australian Resident?</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="gender" class="form-label">Gender</label>
-              <select id="gender" v-model="formData.gender" class="form-select">
-                <option disabled value="">Select an option</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="suburb" class="form-label">Suburb (one-way binding example)</label>
-              <input id="suburb" v-bind:value="formData.suburb" type="text" class="form-control" />
-              <div class="form-text">Edits here do not update formData.suburb in Vue DevTools.</div>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label for="reason" class="form-label">Reason for joining</label>
-            <textarea
-              id="reason"
-              v-model="formData.reason"
+  <div class="row">
+    <div class="col-lg-7">
+      <form @submit.prevent="submitForm" novalidate>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="request-name" class="form-label">Full name</label>
+            <input
+              id="request-name"
+              v-model="formData.fullName"
               class="form-control"
-              rows="3"
-              @input="validateReason"
-            ></textarea>
-            <div v-if="reasonMessage" class="text-success">{{ reasonMessage }}</div>
+              @blur="() => validateFullName(true)"
+              @input="() => validateFullName(false)"
+            />
+            <div v-if="errors.fullName" class="text-danger">{{ errors.fullName }}</div>
           </div>
 
-          <div class="text-center">
-            <button type="submit" class="btn btn-primary me-2">Submit</button>
-            <button type="button" class="btn btn-secondary" @click="clearForm">Clear</button>
+          <div class="col-md-6">
+            <label for="request-email" class="form-label">Email address</label>
+            <input
+              id="request-email"
+              v-model="formData.email"
+              type="email"
+              class="form-control"
+              @blur="() => validateEmail(true)"
+              @input="() => validateEmail(false)"
+            />
+            <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
           </div>
-        </form>
-      </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="request-type" class="form-label">Request type</label>
+            <select id="request-type" v-model="formData.requestType" class="form-select">
+              <option>Membership application</option>
+              <option>Suggest a new book</option>
+              <option>Study room enquiry</option>
+              <option>Volunteer interest</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="request-branch" class="form-label">Preferred branch</label>
+            <select id="request-branch" v-model="formData.branch" class="form-select">
+              <option>Clayton</option>
+              <option>Caulfield</option>
+              <option>Peninsula</option>
+              <option>Berwick</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="request-reason" class="form-label">Reason or details</label>
+          <textarea
+            id="request-reason"
+            v-model="formData.reason"
+            class="form-control"
+            rows="4"
+            @blur="() => validateReason(true)"
+            @input="() => validateReason(false)"
+          ></textarea>
+          <div class="form-text">Include enough detail for the staff team to act on your request.</div>
+          <div v-if="errors.reason" class="text-danger">{{ errors.reason }}</div>
+        </div>
+
+        <div class="form-check mb-4">
+          <input
+            id="request-contact"
+            v-model="formData.agreeToContact"
+            class="form-check-input"
+            type="checkbox"
+          />
+          <label class="form-check-label" for="request-contact">
+            I agree to be contacted about this request.
+          </label>
+        </div>
+
+        <p v-if="feedbackMessage" class="alert alert-success">{{ feedbackMessage }}</p>
+        <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
+
+        <div class="d-flex flex-wrap gap-3">
+          <button type="submit" class="btn btn-dark">Submit request</button>
+          <button type="button" class="btn btn-outline-dark" @click="clearForm">Clear</button>
+        </div>
+      </form>
     </div>
 
-    <div v-if="submittedCards.length" class="row mt-5">
-      <div class="col-12">
-        <h2 class="h4">Registered members</h2>
-        <DataTable :value="submittedCards" table-style="min-width: 50rem">
-          <Column field="username" header="Username" />
-          <Column field="isAustralian" header="Australian Resident" />
-          <Column field="gender" header="Gender" />
-          <Column field="reason" header="Reason" />
+    <div class="col-lg-5 mt-4 mt-lg-0">
+      <div class="status-card h-100">
+        <h2 class="h5">Recent requests</h2>
+        <p class="text-muted">
+          Requests are stored in the browser for this prototype so staff can review them from the
+          protected hub.
+        </p>
+        <DataTable :value="requests" table-style="min-width: 100%">
+          <Column field="fullName" header="Name" />
+          <Column field="requestType" header="Type" />
+          <Column field="status" header="Status" />
         </DataTable>
       </div>
     </div>
-  </section>
+  </div>
 </template>

@@ -1,44 +1,20 @@
 <script setup>
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { login } from '../auth'
-
-const router = useRouter()
-const route = useRoute()
-const username = ref('')
-const password = ref('')
-const errorMessage = ref('')
-
-const submitLogin = () => {
-  if (login(username.value, password.value)) {
-    router.push(route.query.redirect || { name: 'About' })
-    return
-  }
-  errorMessage.value = 'Incorrect username or password. Please try again.'
-}
+import LibraryRegistrationForm from '@/components/LibraryRegistrationForm.vue'
 </script>
 
 <template>
-  <section class="container mt-5" style="max-width: 520px">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="h3 mb-3">Member login</h1>
-        <p v-if="route.query.denied" class="alert alert-warning">
-          Access denied. Please log in to open the members-only About page.
+  <section class="page-section">
+    <div class="container">
+      <div class="content-card p-4 p-md-5">
+        <span class="section-label mb-3">Business Requirement B</span>
+        <h1 class="h2 mt-3">Submit a membership or service request</h1>
+        <p class="text-muted">
+          This form demonstrates client-side validation and stores request data in a structure that
+          the staff hub can review later.
         </p>
-        <p class="text-muted">Demo credentials: <code>librarymember</code> / <code>Password123!</code></p>
-        <form @submit.prevent="submitLogin">
-          <div class="mb-3">
-            <label for="login-username" class="form-label">Username</label>
-            <input id="login-username" v-model="username" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label for="login-password" class="form-label">Password</label>
-            <input id="login-password" v-model="password" type="password" class="form-control" required />
-          </div>
-          <p v-if="errorMessage" class="text-danger">{{ errorMessage }}</p>
-          <button class="btn btn-primary" type="submit">Log in</button>
-        </form>
+        <div class="mt-4">
+          <LibraryRegistrationForm />
+        </div>
       </div>
     </div>
   </section>

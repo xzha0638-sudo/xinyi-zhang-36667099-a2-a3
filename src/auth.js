@@ -1,44 +1,55 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth } from './firebase'
+import { ensureProfileForUser, saveProfile } from './libraryStore'
 
 export const currentUser = ref(null)
 export const authReady = ref(false)
-export const activeRole = ref(localStorage.getItem('nomash-active-role') || '')
-export const roles = ['Member', 'Librarian', 'Manager']
+export const currentProfile = ref(null)
+export const activeRole = computed(() => currentProfile.value?.role || '')
 
 let resolveAuthReady
 export const authReadyPromise = new Promise((resolve) => {
   resolveAuthReady = resolve
 })
 
-export const setActiveRole = (role) => {
-  activeRole.value = role
-  if (role) {
-    localStorage.setItem('nomash-active-role', role)
-    return
+export const refreshCurrentProfile = () => {
+  if (!currentUser.value?.email) {
+    currentProfile.value = null
+    return null
   }
-  localStorage.removeItem('nomash-active-role')
+
+  currentProfile.value = ensureProfileForUser(currentUser.value)
+  return currentProfile.value
+}
+
+export const updateCurrentProfile = (patch) => {
+  if (!currentUser.value?.email || !currentProfile.value) {
+    return null
+  }
+
+  currentProfile.value = saveProfile({
+    ...currentProfile.value,
+    email: currentUser.value.email,
+    ...patch
+  })
+
+  return currentProfile.value
 }
 
 onAuthStateChanged(auth, (user) => {
   currentUser.value = user
   authReady.value = true
 
-  if (!user) {
-    setActiveRole('')
-  }
+  currentProfile.value = user ? ensureProfileForUser(user) : null
 
   if (resolveAuthReady) {
     resolveAuthReady()
     resolveAuthReady = null
   }
-
-  console.log('Current Firebase user:', user ? { uid: user.uid, email: user.email } : null)
 })
 
 export const logoutUser = async () => {
   await signOut(auth)
-  setActiveRole('')
-  console.log('Current Firebase user after logout:', auth.currentUser)
+  currentProfile.value = null
 }

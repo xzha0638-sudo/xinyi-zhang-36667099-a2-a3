@@ -1,37 +1,55 @@
+<script setup>
+import { computed } from 'vue'
+import { currentProfile, currentUser } from '@/auth'
+import { getLibraryStats } from '@/libraryStore'
+
+const stats = computed(() => getLibraryStats())
+</script>
+
 <template>
   <section class="page-section">
     <div class="container">
       <div class="hero-card hero-accent">
         <div class="row g-0 align-items-stretch">
           <div class="col-lg-7 p-4 p-md-5">
-            <span class="section-label mb-3">Self-paced Lab</span>
-            <h1 class="headline mt-3">Mastering user authentication in Vue.js with Firebase</h1>
+            <span class="section-label mb-3">NoMash Library Platform</span>
+            <h1 class="headline mt-3">Borrow, review, and manage a campus library in one place.</h1>
             <p class="subheadline mt-3 mb-4">
-              This project reuses the NoMash Library idea from earlier weeks and adds Firebase
-              registration, sign-in, role selection, protected routing, and logout tracking for
-              Topic 7.
+              This web application combines account registration, role-based access, dynamic
+              catalog data, and a member rating system for the NoMash Library network.
             </p>
 
             <div class="d-flex flex-wrap gap-3">
-              <router-link to="/firebase-register" class="btn btn-dark btn-lg">
-                Open registration page
+              <router-link to="/catalog" class="btn btn-dark btn-lg">Browse catalog</router-link>
+              <router-link to="/join" class="btn btn-outline-dark btn-lg">
+                Submit a membership request
               </router-link>
-              <router-link to="/firebase-signin" class="btn btn-outline-dark btn-lg">
-                Open sign-in page
+              <router-link
+                v-if="!currentUser"
+                to="/firebase-register"
+                class="btn btn-outline-dark btn-lg"
+              >
+                Create account
+              </router-link>
+              <router-link v-else to="/dashboard" class="btn btn-outline-dark btn-lg">
+                Open dashboard
               </router-link>
             </div>
           </div>
 
           <div class="col-lg-5 p-4 p-md-5">
             <div class="stat-card p-4 h-100">
-              <h2 class="h4">Lab checklist</h2>
-              <ul class="mt-3 mb-0">
-                <li>Firebase project and web app configured</li>
-                <li>Authentication enabled with email and password</li>
-                <li>Registration page completed</li>
-                <li>Sign-in page completed with current user logging</li>
-                <li>Role-based sign-in demo completed</li>
-                <li>Logout page completed with user state verification</li>
+              <h2 class="h4">Application snapshot</h2>
+              <ul class="mt-3 mb-0 library-stat-list">
+                <li><strong>{{ stats.totalBooks }}</strong> curated books across branches</li>
+                <li><strong>{{ stats.featuredBooks }}</strong> featured picks on the catalog page</li>
+                <li><strong>{{ stats.totalRatings }}</strong> member ratings recorded</li>
+                <li><strong>{{ stats.averageRating || '0.0' }}</strong> current catalog average</li>
+                <li><strong>{{ stats.totalRequests }}</strong> membership or service requests logged</li>
+                <li v-if="currentProfile">
+                  Signed in as <strong>{{ currentProfile.displayName }}</strong> ({{ currentProfile.role }})
+                </li>
+                <li v-else>Sign in to rate books and unlock role-based pages</li>
               </ul>
             </div>
           </div>
@@ -39,27 +57,26 @@
       </div>
 
       <div class="content-card p-4 p-md-5 mt-4">
-        <h2 class="h3">What to screenshot for the submission</h2>
+        <h2 class="h3">How the app maps to the business requirements</h2>
         <div class="status-grid mt-4">
           <div class="status-card">
-            <h3 class="h5">Task 7.1</h3>
+            <h3 class="h5">Authentication</h3>
             <p class="mb-0">
-              Registration page, sign-in page with console showing the current user, and the
-              Firebase users panel.
+              Firebase email/password accounts are linked to stored library profiles and branch
+              preferences.
             </p>
           </div>
           <div class="status-card">
-            <h3 class="h5">Task 7.2</h3>
+            <h3 class="h5">Role access</h3>
             <p class="mb-0">
-              Sign in with multiple roles on the Role Portal page, then capture the logout page and
-              console output.
+              Members, librarians, and managers see different navigation and protected routes.
             </p>
           </div>
           <div class="status-card">
-            <h3 class="h5">Quick note</h3>
+            <h3 class="h5">Ratings & data</h3>
             <p class="mb-0">
-              Replace the placeholder Firebase config values before testing so the forms connect to
-              your own Firebase project.
+              Catalog books are loaded from JSON and each signed-in user can leave one rating per
+              title.
             </p>
           </div>
         </div>

@@ -1,178 +1,153 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { currentUser } from '@/auth'
+import { getCatalog, getMyRating, rateBook } from '@/libraryStore'
 
-import authors from '@/assets/json/authors.json'
-import bookstores from '@/assets/json/bookstores.json'
+const router = useRouter()
 
-const showMessage = ref(false)
+const catalog = ref([])
+const search = ref('')
+const selectedGenre = ref('All')
+const feedbackMessage = ref('')
+const errorMessage = ref('')
+const reviewNotes = ref({})
 
-const modernAuthors = computed(() => authors.filter((author) => author.birthYear > 1850))
-const allFamousWorks = computed(() => authors.flatMap((author) => author.famousWorks))
-const orwell = computed(() => authors.find((author) => author.name === 'George Orwell'))
-const austen = computed(() => authors.find((author) => author.id === 1))
-const booksByAusten = computed(() => authors.find((author) => author.id === 1)?.famousWorks ?? [])
-const companyName = computed(() => bookstores.name)
-const totalStores = computed(() => bookstores.totalStores)
-const storeTypes = computed(() => bookstores.storeTypes)
-const openingHours = computed(() => bookstores.openingHours)
-const countriesOperated = computed(() => bookstores.countries.join(', '))
-const topSellers = computed(() => bookstores.topSellers.join(', '))
+const refreshCatalog = () => {
+  catalog.value = getCatalog()
+}
 
-const toggleMessage = () => {
-  showMessage.value = !showMessage.value
+watch(currentUser, refreshCatalog, { immediate: true })
+
+const genres = computed(() => ['All', ...new Set(catalog.value.map((book) => book.genre))])
+
+const filteredCatalog = computed(() =>
+  catalog.value.filter((book) => {
+    const matchesSearch =
+      book.title.toLowerCase().includes(search.value.toLowerCase()) ||
+      book.author.toLowerCase().includes(search.value.toLowerCase()) ||
+      book.branch.toLowerCase().includes(search.value.toLowerCase())
+    const matchesGenre = selectedGenre.value === 'All' || book.genre === selectedGenre.value
+    return matchesSearch && matchesGenre
+  })
+)
+
+const myRatingFor = (bookId) => getMyRating({ bookId, email: currentUser.value?.email })?.rating || 0
+
+const saveRating = (bookId, rating) => {
+  feedbackMessage.value = ''
+  errorMessage.value = ''
+
+  if (!currentUser.value?.email) {
+    router.push({ name: 'FirebaseSignin', query: { redirect: '/catalog', denied: 'true' } })
+    return
+  }
+
+  try {
+    rateBook({
+      bookId,
+      email: currentUser.value.email,
+      rating,
+      note: reviewNotes.value[bookId] || ''
+    })
+    reviewNotes.value[bookId] = ''
+    feedbackMessage.value = 'Your rating was saved successfully.'
+    refreshCatalog()
+  } catch (error) {
+    errorMessage.value = error.message
+  }
 }
 </script>
 
 <template>
-  <div class="json-lab">
-    <h1>W2 JSON Data and Vue Directives Lab</h1>
+  <section class="page-section">
+    <div class="container">
+      <div class="content-card p-4 p-md-5">
+        <span class="section-label mb-3">Business Requirement B + C.3</span>
+        <h1 class="h2 mt-3">Dynamic library catalog</h1>
+        <p class="text-muted">
+          The catalog below is rendered from structured JSON data. Signed-in members can rate a
+          book, and the average updates across the interface.
+        </p>
 
-    <section class="lab-section">
-      <h2>Working with JSON Arrays</h2>
-      <p>Our <code>authors.json</code> contains an array of author objects.</p>
+        <div class="row mt-4">
+          <div class="col-md-8 mb-3">
+            <label class="form-label" for="catalog-search">Search the catalog</label>
+            <input
+              id="catalog-search"
+              v-model="search"
+              class="form-control"
+              placeholder="Try a title, author, or branch"
+            />
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="catalog-genre">Genre</label>
+            <select id="catalog-genre" v-model="selectedGenre" class="form-select">
+              <option v-for="genre in genres" :key="genre" :value="genre">{{ genre }}</option>
+            </select>
+          </div>
+        </div>
 
-      <h3>Iterating Through Arrays</h3>
-      <ul>
-        <li v-for="author in authors" :key="author.id">
-          {{ author.name }} ({{ author.birthYear }})
-        </li>
-      </ul>
+        <p v-if="feedbackMessage" class="alert alert-success">{{ feedbackMessage }}</p>
+        <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
 
-      <h3>Filtering Arrays</h3>
-      <p>Authors born after 1850:</p>
-      <ul>
-        <li v-for="author in modernAuthors" :key="author.id">
-          {{ author.name }} ({{ author.birthYear }})
-        </li>
-      </ul>
+        <div class="status-grid mt-4">
+          <article v-for="book in filteredCatalog" :key="book.id" class="status-card catalog-card">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <div class="section-label mb-2">{{ book.genre }}</div>
+                <h2 class="h5 mb-1">{{ book.title }}</h2>
+                <p class="text-muted mb-2">{{ book.author }} · {{ book.year }} · {{ book.branch }}</p>
+              </div>
+              <div class="text-end">
+                <div class="small text-muted">Avg. rating</div>
+                <div class="display-number">{{ book.averageRating || '0.0' }}</div>
+                <div class="small text-muted">{{ book.ratingCount }} ratings</div>
+              </div>
+            </div>
 
-      <h3>Mapping Arrays</h3>
-      <p>Famous works:</p>
-      <ul>
-        <li v-for="work in allFamousWorks" :key="`${work.title}-${work.year}`">
-          {{ work.title }} ({{ work.year }})
-        </li>
-      </ul>
+            <p class="mt-3 mb-3">{{ book.summary }}</p>
 
-      <h3>Finding in Arrays</h3>
-      <p>Finding by property: {{ orwell?.name }}</p>
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <span class="badge-soft">Copies available: {{ book.availableCopies }}</span>
+              <span v-if="book.featured" class="badge-soft badge-highlight">Featured</span>
+              <span v-if="myRatingFor(book.id)" class="badge-soft">
+                Your rating: {{ myRatingFor(book.id) }}/5
+              </span>
+            </div>
 
-      <h3>Nested Arrays and Objects</h3>
-      <p>{{ austen?.name }}'s works:</p>
-      <ul>
-        <li v-for="work in booksByAusten" :key="`${work.title}-${work.year}`">
-          {{ work.title }} ({{ work.year }})
-        </li>
-      </ul>
-    </section>
+            <div class="mb-3">
+              <div class="small text-muted mb-2">Rate this title</div>
+              <div class="d-flex flex-wrap gap-2">
+                <button
+                  v-for="star in 5"
+                  :key="`${book.id}-${star}`"
+                  type="button"
+                  class="btn btn-outline-dark btn-sm"
+                  @click="saveRating(book.id, star)"
+                >
+                  {{ star }} star{{ star > 1 ? 's' : '' }}
+                </button>
+              </div>
+            </div>
 
-    <section class="lab-section">
-      <h2>Working with JSON Objects</h2>
-      <p>Our <code>bookstores.json</code> is a JSON object.</p>
+            <div class="mb-3">
+              <label class="form-label" :for="`note-${book.id}`">Optional short review</label>
+              <textarea
+                :id="`note-${book.id}`"
+                v-model="reviewNotes[book.id]"
+                rows="2"
+                class="form-control"
+                placeholder="Share one short sentence about the book"
+              ></textarea>
+            </div>
 
-      <h3>Accessing Properties</h3>
-      <p>Company: {{ companyName }}</p>
-      <p>Total Stores: {{ totalStores }}</p>
-
-      <h3>Iterating Object Properties</h3>
-      <ul>
-        <li v-for="storeType in storeTypes" :key="storeType.type">
-          {{ storeType.type }}: {{ storeType.count }}
-        </li>
-      </ul>
-
-      <h3>Nested Objects</h3>
-      <p>Weekdays: {{ openingHours.weekdays.open }} - {{ openingHours.weekdays.close }}</p>
-      <p>Weekends: {{ openingHours.weekends.open }} - {{ openingHours.weekends.close }}</p>
-
-      <h3>Working with Arrays in Objects</h3>
-      <p>We operate in: {{ countriesOperated }}</p>
-      <p>Our top sellers: {{ topSellers }}</p>
-    </section>
-
-    <section class="lab-section">
-      <h2>v-if and v-else</h2>
-      <p>Toggle visibility based on a condition.</p>
-      <button class="btn btn-outline-primary" @click="toggleMessage">Toggle Message</button>
-      <p v-if="showMessage" class="message success">You're a Vue superstar!</p>
-      <p v-else>Click the button to see a message.</p>
-    </section>
-
-    <section class="lab-section">
-      <h2>Attribute, Class and Style Binding with <code>v-bind</code></h2>
-      <p>Authors born after 1900 are highlighted below.</p>
-      <ul>
-        <li
-          v-for="author in authors"
-          :key="`highlight-${author.id}`"
-          :class="{ highlight: author.birthYear > 1900 }"
-        >
-          {{ author.name }} ({{ author.birthYear }})
-        </li>
-      </ul>
-    </section>
-  </div>
+            <p v-if="book.latestReview" class="small text-muted mb-0">
+              Latest review: "{{ book.latestReview }}"
+            </p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
-
-<style scoped>
-.json-lab {
-  max-width: 80vw;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f4f4f4;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-h1,
-h2 {
-  color: #333;
-}
-
-h1 {
-  text-align: center;
-}
-
-.lab-section {
-  background-color: #fff;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.message {
-  padding: 10px;
-  border-radius: 5px;
-  margin-top: 10px;
-}
-
-.success {
-  background-color: #e7faf3;
-  color: #42b883;
-  border: 1px solid #42b883;
-}
-
-.highlight {
-  background-color: #d9f6e9;
-}
-
-code {
-  background-color: #e0e0e0;
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  background-color: #f0f0f0;
-  padding: 10px;
-  margin: 5px 0;
-  border-radius: 5px;
-}
-</style>

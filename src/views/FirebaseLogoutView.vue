@@ -15,7 +15,7 @@ const handleLogout = async () => {
 
   try {
     await logoutUser()
-    message.value = 'Logged out successfully. The console should now show the current user as null.'
+    message.value = 'Logged out successfully. You can sign in again whenever you are ready.'
     setTimeout(() => {
       router.push({ name: 'FirebaseSignin' })
     }, 1200)
@@ -31,11 +31,11 @@ const handleLogout = async () => {
   <section class="page-section">
     <div class="container">
       <div class="content-card form-card p-4 p-md-5">
-        <span class="section-label mb-3">Task 7.2</span>
-        <h1 class="h2 mt-3">Firebase log out</h1>
+        <span class="section-label mb-3">Session</span>
+        <h1 class="h2 mt-3">Sign out of NoMash Library</h1>
         <p class="text-muted">
-          Keep the developer console open here, then click the button to capture the current user
-          state after logout.
+          Sign out to return to the public catalog and protect access to member-only pages on a
+          shared device.
         </p>
 
         <div class="status-card mb-4">
