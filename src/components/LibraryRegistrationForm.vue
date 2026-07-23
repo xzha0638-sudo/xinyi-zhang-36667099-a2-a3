@@ -1,7 +1,5 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import { getRequestEntries, submitLibraryRequest } from '@/libraryStore'
 
 const formData = ref({
@@ -16,7 +14,8 @@ const formData = ref({
 const errors = ref({
   fullName: null,
   email: null,
-  reason: null
+  reason: null,
+  agreeToContact: null
 })
 const feedbackMessage = ref('')
 const errorMessage = ref('')
@@ -40,10 +39,21 @@ const validateEmail = (blur) => {
 }
 
 const validateReason = (blur) => {
-  if (formData.value.reason.trim().length < 15) {
+  const cleanReasonLength = formData.value.reason.trim().length
+  if (cleanReasonLength < 15) {
     if (blur) errors.value.reason = 'Reason must be at least 15 characters.'
+  } else if (cleanReasonLength > 280) {
+    if (blur) errors.value.reason = 'Keep request details under 280 characters.'
   } else {
     errors.value.reason = null
+  }
+}
+
+const validateContactConsent = (blur) => {
+  if (!formData.value.agreeToContact) {
+    if (blur) errors.value.agreeToContact = 'Please agree to be contacted about this request.'
+  } else {
+    errors.value.agreeToContact = null
   }
 }
 
@@ -56,7 +66,7 @@ const clearForm = () => {
     reason: '',
     agreeToContact: false
   }
-  errors.value = { fullName: null, email: null, reason: null }
+  errors.value = { fullName: null, email: null, reason: null, agreeToContact: null }
 }
 
 const refreshRequests = () => {
@@ -70,15 +80,17 @@ const submitForm = () => {
   validateFullName(true)
   validateEmail(true)
   validateReason(true)
+  validateContactConsent(true)
 
-  if (!errors.value.fullName && !errors.value.email && !errors.value.reason) {
+  if (!errors.value.fullName && !errors.value.email && !errors.value.reason && !errors.value.agreeToContact) {
     try {
       submitLibraryRequest({
         fullName: formData.value.fullName,
         email: formData.value.email,
         branch: formData.value.branch,
         requestType: formData.value.requestType,
-        reason: formData.value.reason
+        reason: formData.value.reason,
+        agreeToContact: formData.value.agreeToContact
       })
       feedbackMessage.value = 'Your request has been recorded for staff review.'
       refreshRequests()
@@ -154,7 +166,10 @@ onMounted(refreshRequests)
             @blur="() => validateReason(true)"
             @input="() => validateReason(false)"
           ></textarea>
-          <div class="form-text">Include enough detail for the staff team to act on your request.</div>
+          <div class="d-flex justify-content-between gap-3 form-text">
+            <span>Include enough detail for the staff team to act on your request.</span>
+            <span>{{ formData.reason.trim().length }}/280</span>
+          </div>
           <div v-if="errors.reason" class="text-danger">{{ errors.reason }}</div>
         </div>
 
@@ -164,11 +179,13 @@ onMounted(refreshRequests)
             v-model="formData.agreeToContact"
             class="form-check-input"
             type="checkbox"
+            @change="() => validateContactConsent(true)"
           />
           <label class="form-check-label" for="request-contact">
             I agree to be contacted about this request.
           </label>
         </div>
+        <div v-if="errors.agreeToContact" class="text-danger mb-3">{{ errors.agreeToContact }}</div>
 
         <p v-if="feedbackMessage" class="alert alert-success">{{ feedbackMessage }}</p>
         <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
@@ -187,11 +204,27 @@ onMounted(refreshRequests)
           Requests are stored in the browser for this prototype so staff can review them from the
           protected hub.
         </p>
-        <DataTable :value="requests" table-style="min-width: 100%">
-          <Column field="fullName" header="Name" />
-          <Column field="requestType" header="Type" />
-          <Column field="status" header="Status" />
-        </DataTable>
+        <div class="table-wrap mt-3">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="request in requests" :key="request.id">
+                <td>{{ request.fullName }}</td>
+                <td>{{ request.requestType }}</td>
+                <td><span class="status-pill">{{ request.status }}</span></td>
+              </tr>
+              <tr v-if="!requests.length">
+                <td colspan="3" class="text-muted">No requests have been submitted yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

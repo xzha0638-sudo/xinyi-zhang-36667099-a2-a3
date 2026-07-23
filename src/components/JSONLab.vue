@@ -12,6 +12,7 @@ const selectedGenre = ref('All')
 const feedbackMessage = ref('')
 const errorMessage = ref('')
 const reviewNotes = ref({})
+const selectedRatings = ref({})
 
 const refreshCatalog = () => {
   catalog.value = getCatalog()
@@ -34,7 +35,9 @@ const filteredCatalog = computed(() =>
 
 const myRatingFor = (bookId) => getMyRating({ bookId, email: currentUser.value?.email })?.rating || 0
 
-const saveRating = (bookId, rating) => {
+const chosenRatingFor = (bookId) => selectedRatings.value[bookId] || myRatingFor(bookId)
+
+const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
   feedbackMessage.value = ''
   errorMessage.value = ''
 
@@ -44,6 +47,10 @@ const saveRating = (bookId, rating) => {
   }
 
   try {
+    if (!rating) {
+      throw new Error('Choose a star rating before saving.')
+    }
+
     rateBook({
       bookId,
       email: currentUser.value.email,
@@ -118,15 +125,17 @@ const saveRating = (bookId, rating) => {
 
             <div class="mb-3">
               <div class="small text-muted mb-2">Rate this title</div>
-              <div class="d-flex flex-wrap gap-2">
+              <div class="star-row">
                 <button
                   v-for="star in 5"
                   :key="`${book.id}-${star}`"
                   type="button"
-                  class="btn btn-outline-dark btn-sm"
-                  @click="saveRating(book.id, star)"
+                  class="star-button"
+                  :class="{ selected: star <= chosenRatingFor(book.id) }"
+                  :aria-label="`Choose ${star} star rating for ${book.title}`"
+                  @click="selectedRatings[book.id] = star"
                 >
-                  {{ star }} star{{ star > 1 ? 's' : '' }}
+                  ★
                 </button>
               </div>
             </div>
@@ -138,15 +147,25 @@ const saveRating = (bookId, rating) => {
                 v-model="reviewNotes[book.id]"
                 rows="2"
                 class="form-control"
+                maxlength="160"
                 placeholder="Share one short sentence about the book"
               ></textarea>
+              <div class="form-text text-end">{{ (reviewNotes[book.id] || '').length }}/160</div>
             </div>
+
+            <button type="button" class="btn btn-dark btn-sm mt-auto" @click="saveRating(book.id)">
+              Save rating
+            </button>
 
             <p v-if="book.latestReview" class="small text-muted mb-0">
               Latest review: "{{ book.latestReview }}"
             </p>
           </article>
         </div>
+
+        <p v-if="!filteredCatalog.length" class="alert alert-warning mt-4">
+          No catalog records match the current search and filter.
+        </p>
       </div>
     </div>
   </section>

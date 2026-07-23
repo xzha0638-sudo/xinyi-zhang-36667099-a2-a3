@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { refreshCurrentProfile } from '@/auth'
@@ -18,6 +18,46 @@ const accessCode = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const errors = ref({
+  fullName: null,
+  email: null,
+  password: null,
+  confirmPassword: null,
+  accessCode: null
+})
+
+const passwordStrength = computed(() => {
+  let score = 0
+  if (password.value.length >= 8) score += 1
+  if (/[A-Z]/.test(password.value)) score += 1
+  if (/[0-9]/.test(password.value)) score += 1
+  if (/[^A-Za-z0-9]/.test(password.value)) score += 1
+  return score
+})
+
+const passwordStrengthLabel = computed(() => {
+  if (!password.value) return 'Not started'
+  if (passwordStrength.value <= 1) return 'Weak'
+  if (passwordStrength.value <= 3) return 'Good'
+  return 'Strong'
+})
+
+const validateForm = () => {
+  errors.value = {
+    fullName: fullName.value.trim().length < 3 ? 'Please enter at least 3 characters.' : null,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)
+      ? null
+      : 'Please enter a valid email address.',
+    password: password.value.length >= 8 ? null : 'Password must be at least 8 characters.',
+    confirmPassword: password.value === confirmPassword.value ? null : 'Passwords do not match.',
+    accessCode:
+      role.value === 'Member' || accessCode.value.trim()
+        ? null
+        : 'Staff accounts need the correct access code.'
+  }
+
+  return Object.values(errors.value).every((error) => !error)
+}
 
 const registerUser = async () => {
   errorMessage.value = ''
@@ -28,18 +68,8 @@ const registerUser = async () => {
     return
   }
 
-  if (fullName.value.trim().length < 3) {
-    errorMessage.value = 'Please enter your full name.'
-    return
-  }
-
-  if (password.value !== confirmPassword.value) {
-    errorMessage.value = 'Passwords do not match.'
-    return
-  }
-
-  if (password.value.length < 8) {
-    errorMessage.value = 'Password must be at least 8 characters.'
+  if (!validateForm()) {
+    errorMessage.value = 'Please fix the highlighted fields before creating the account.'
     return
   }
 
@@ -94,6 +124,7 @@ const registerUser = async () => {
               placeholder="Xinyi Zhang"
               required
             />
+            <div v-if="errors.fullName" class="text-danger">{{ errors.fullName }}</div>
           </div>
 
           <div class="mb-3">
@@ -106,6 +137,7 @@ const registerUser = async () => {
               placeholder="student@monash.edu"
               required
             />
+            <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
           </div>
 
           <div class="row">
@@ -139,6 +171,8 @@ const registerUser = async () => {
               placeholder="At least 8 characters"
               required
             />
+            <div class="form-text">Strength: {{ passwordStrengthLabel }}</div>
+            <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
           </div>
 
           <div class="mb-3">
@@ -150,6 +184,7 @@ const registerUser = async () => {
               class="form-control"
               required
             />
+            <div v-if="errors.confirmPassword" class="text-danger">{{ errors.confirmPassword }}</div>
           </div>
 
           <div v-if="role !== 'Member'" class="mb-3">
@@ -162,6 +197,7 @@ const registerUser = async () => {
               placeholder="Enter the code provided by the manager"
               required
             />
+            <div v-if="errors.accessCode" class="text-danger">{{ errors.accessCode }}</div>
           </div>
 
           <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>

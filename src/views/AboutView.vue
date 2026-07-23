@@ -1,15 +1,24 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import { activeRole } from '@/auth'
-import { getLibraryStats, getRequestEntries } from '@/libraryStore'
+import { getLibraryStats, getRequestEntries, updateRequestStatus } from '@/libraryStore'
 
 const route = useRoute()
-const stats = computed(() => getLibraryStats())
-const requests = computed(() => getRequestEntries())
+const stats = ref(getLibraryStats())
+const requests = ref(getRequestEntries())
 const isStaffHub = computed(() => route.name === 'StaffHub')
+const canApproveRequests = computed(() => activeRole.value === 'Manager')
+
+const refreshStaffData = () => {
+  stats.value = getLibraryStats()
+  requests.value = getRequestEntries()
+}
+
+const setRequestStatus = (request, status) => {
+  updateRequestStatus({ id: request.id, status })
+  refreshStaffData()
+}
 </script>
 
 <template>
@@ -34,18 +43,73 @@ const isStaffHub = computed(() => route.name === 'StaffHub')
           </div>
           <div class="status-card">
             <div class="text-muted small mb-2">Pending requests</div>
-            <div class="display-number">{{ stats.totalRequests }}</div>
+            <div class="display-number">{{ stats.pendingRequests }}</div>
+          </div>
+          <div class="status-card">
+            <div class="text-muted small mb-2">Reviewed requests</div>
+            <div class="display-number">{{ stats.reviewedRequests }}</div>
           </div>
         </div>
 
         <div class="content-card p-4 mt-4 dashboard-nested-card">
           <h2 class="h5">Recent member and service requests</h2>
-          <DataTable :value="requests" table-style="min-width: 100%">
-            <Column field="fullName" header="Member" />
-            <Column field="requestType" header="Request" />
-            <Column field="branch" header="Branch" />
-            <Column field="status" header="Status" />
-          </DataTable>
+          <div class="table-wrap mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Request</th>
+                  <th>Branch</th>
+                  <th>Status</th>
+                  <th>Staff action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="request in requests" :key="request.id">
+                  <td>
+                    <strong>{{ request.fullName }}</strong>
+                    <div class="small text-muted">{{ request.email }}</div>
+                  </td>
+                  <td>{{ request.requestType }}</td>
+                  <td>{{ request.branch }}</td>
+                  <td><span class="status-pill">{{ request.status }}</span></td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="btn btn-outline-dark btn-sm"
+                        @click="setRequestStatus(request, 'In review')"
+                      >
+                        Review
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-dark btn-sm"
+                        :disabled="!canApproveRequests"
+                        @click="setRequestStatus(request, 'Approved')"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-dark btn-sm"
+                        @click="setRequestStatus(request, 'Closed')"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="!requests.length">
+                  <td colspan="5" class="text-muted">No service requests have been submitted yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small text-muted mt-3 mb-0">
+            Managers can approve requests. Librarians can move requests into review or close them
+            after follow-up.
+          </p>
         </div>
       </div>
 
@@ -77,6 +141,13 @@ const isStaffHub = computed(() => route.name === 'StaffHub')
             <p class="mb-0">
               Request text and review notes are normalised before storage so angle-bracket input
               is not kept as raw content.
+            </p>
+          </div>
+          <div class="status-card">
+            <h2 class="h5">Workflow limits</h2>
+            <p class="mb-0">
+              Service requests require contact consent, email format checks, and length limits
+              before being saved to browser storage.
             </p>
           </div>
         </div>

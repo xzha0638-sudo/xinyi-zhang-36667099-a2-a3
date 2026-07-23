@@ -1,19 +1,40 @@
-# NoMash Library Topic 7
+# NoMash Library A2
 
-This project reuses the earlier NoMash Library structure and adds Firebase authentication for Lab Topic 7.
+Student: Xinyi Zhang  
+Student number: 36667099
 
-## Setup
+NoMash Library is a Vue 3 web application for managing a small campus library prototype. It includes dynamic JSON catalog data, user input validation, Firebase authentication, role-based page protection, request workflows, and a member rating feature.
 
-1. Run npm install
-2. Copy .env.example to .env
-3. Paste the Firebase web app values from your Firebase Console into .env
-4. Run npm run dev
+## Run The Project
 
-## Pages for screenshots
+1. Run `npm install`
+2. Copy `.env.example` to `.env` if the file exists in your submission package
+3. Add Firebase web app values to `.env`
+4. Run `npm run dev`
+5. Open the local URL shown in the terminal
 
-- /firebase-register: registration page
-- /firebase-signin: sign-in page with role selection
-- /role-portal: protected page showing the signed-in user and selected role
-- /firebase-logout: logout page with current user state
+## Demo Routes
 
-Open the browser developer console while testing. The app logs the current Firebase user on sign-in and sign-out to support the lab screenshots.
+- `/` shows the application overview and live snapshot statistics
+- `/catalog` loads books from JSON and allows signed-in users to rate titles
+- `/join` validates and stores membership or service requests
+- `/firebase-register` creates Firebase accounts and local library profiles
+- `/firebase-signin` signs users in and loads their stored role
+- `/dashboard` shows the protected member dashboard
+- `/staff-hub` is restricted to Librarian and Manager profiles
+- `/security` documents validation, access control, and storage decisions
+
+## Role Testing
+
+Member accounts do not need an access code.
+
+Staff access codes for the local prototype:
+
+- Librarian: `STACKS-2026`
+- Manager: `HARBOR-2026`
+
+Managers can approve service requests. Librarians can move requests into review or close them after follow-up.
+
+## Notes
+
+The app uses local browser storage for prototype-only library profiles, ratings, and service requests. Firebase is used for email/password authentication. This is suitable for an assessment prototype, not for a production library system.

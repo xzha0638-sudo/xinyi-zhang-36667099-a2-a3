@@ -16,8 +16,7 @@ export const sharedViteConfig = {
       output: {
         manualChunks: {
           'vendor-vue': ['vue', 'vue-router'],
-          'vendor-firebase': ['firebase/app', 'firebase/auth'],
-          'vendor-primevue': ['primevue/config', 'primevue/datatable', 'primevue/column']
+          'vendor-firebase': ['firebase/app', 'firebase/auth']
         }
       }
     }

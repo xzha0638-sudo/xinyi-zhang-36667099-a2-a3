@@ -3,6 +3,7 @@ import books from '@/assets/json/books.json'
 const PROFILES_KEY = 'nomash-library-profiles'
 const RATINGS_KEY = 'nomash-library-ratings'
 const REQUESTS_KEY = 'nomash-library-requests'
+const REQUEST_STATUSES = ['Pending', 'In review', 'Approved', 'Closed']
 
 export const ACCESS_CODES = {
   Librarian: 'STACKS-2026',
@@ -144,6 +145,9 @@ export const rateBook = ({ bookId, email, rating, note }) => {
   if (!Number.isInteger(safeRating) || safeRating < 1 || safeRating > 5) {
     throw new Error('Rating must be between 1 and 5 stars.')
   }
+  if (sanitizeText(note).length > 160) {
+    throw new Error('Review notes must stay under 160 characters.')
+  }
 
   const ratings = getRatings()
   const key = String(bookId)
@@ -165,16 +169,22 @@ export const getMyRating = ({ bookId, email }) => {
 export const getRequestEntries = () =>
   readJson(REQUESTS_KEY, []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-export const submitLibraryRequest = ({ fullName, email, branch, requestType, reason }) => {
+export const submitLibraryRequest = ({ fullName, email, branch, requestType, reason, agreeToContact }) => {
   const safeEmail = emailKey(email)
   if (!fullName || fullName.trim().length < 3) {
     throw new Error('Name must be at least 3 characters long.')
   }
-  if (!safeEmail || !safeEmail.includes('@')) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeEmail)) {
     throw new Error('Please enter a valid email address.')
   }
   if (!reason || reason.trim().length < 15) {
     throw new Error('Please share a longer reason for your request.')
+  }
+  if (sanitizeText(reason).length > 280) {
+    throw new Error('Request details must stay under 280 characters.')
+  }
+  if (!agreeToContact) {
+    throw new Error('Please agree to be contacted about this request.')
   }
 
   const requests = readJson(REQUESTS_KEY, [])
@@ -186,11 +196,33 @@ export const submitLibraryRequest = ({ fullName, email, branch, requestType, rea
     requestType,
     reason: sanitizeText(reason),
     status: 'Pending',
+    agreeToContact: true,
     createdAt: new Date().toISOString()
   }
   requests.unshift(request)
   writeJson(REQUESTS_KEY, requests)
   return request
+}
+
+export const updateRequestStatus = ({ id, status }) => {
+  if (!REQUEST_STATUSES.includes(status)) {
+    throw new Error('Unsupported request status.')
+  }
+
+  const requests = readJson(REQUESTS_KEY, [])
+  const requestIndex = requests.findIndex((request) => request.id === id)
+
+  if (requestIndex === -1) {
+    throw new Error('Request could not be found.')
+  }
+
+  requests[requestIndex] = {
+    ...requests[requestIndex],
+    status,
+    updatedAt: new Date().toISOString()
+  }
+  writeJson(REQUESTS_KEY, requests)
+  return requests[requestIndex]
 }
 
 export const getLibraryStats = () => {
@@ -215,6 +247,8 @@ export const getLibraryStats = () => {
     totalBooks: catalog.length,
     featuredBooks: catalog.filter((book) => book.featured).length,
     totalRequests: requests.length,
+    pendingRequests: requests.filter((request) => request.status === 'Pending').length,
+    reviewedRequests: requests.filter((request) => request.status !== 'Pending').length,
     totalRatings,
     averageRating
   }
