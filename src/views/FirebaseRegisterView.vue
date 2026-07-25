@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { refreshCurrentProfile } from '@/auth'
 import { auth, isFirebaseConfigured } from '@/firebase'
-import { branches, registerLibraryProfile, roles } from '@/libraryStore'
+import { branches, getRoleLabel, registerLibraryProfile, roles } from '@/libraryStore'
 
 const router = useRouter()
 
@@ -25,6 +25,7 @@ const errors = ref({
   confirmPassword: null,
   accessCode: null
 })
+const roleOptions = computed(() => roles.map((roleValue) => ({ value: roleValue, label: getRoleLabel(roleValue) })))
 
 const passwordStrength = computed(() => {
   let score = 0
@@ -117,7 +118,7 @@ const registerUser = async () => {
       accessCode: accessCode.value
     })
     refreshCurrentProfile()
-    successMessage.value = `Account created for ${profile.displayName} as ${profile.role}.`
+    successMessage.value = `Account created for ${profile.displayName} as ${getRoleLabel(profile.role)}.`
     setTimeout(() => {
       router.push({ name: 'Dashboard' })
     }, 900)
@@ -134,15 +135,15 @@ const registerUser = async () => {
     <div class="container">
       <div class="content-card form-card p-4 p-md-5">
         <span class="section-label mb-3">Registration</span>
-        <h1 class="h2 mt-3">Create a NoMash Library account</h1>
+        <h1 class="h2 mt-3">Create a BridgeWell Health account</h1>
         <p class="text-muted">
-          Each account is linked to a library profile. Member access is open, while staff roles
-          require an additional access code.
+          Each account is linked to a community support profile. Community member access is open,
+          while staff roles require an additional access code.
         </p>
 
         <div class="firebase-note rounded-4 p-3 mb-4">
           <strong>Demo access:</strong> use the staff access code only when you want to create a
-          librarian or manager account for role-based testing.
+          support worker or program manager account for role-based testing.
         </div>
 
         <form @submit.prevent="registerUser">
@@ -180,14 +181,14 @@ const registerUser = async () => {
             <div class="col-md-6 mb-3">
               <label for="register-role" class="form-label">Account role</label>
               <select id="register-role" v-model="role" class="form-select">
-                <option v-for="roleOption in roles" :key="roleOption" :value="roleOption">
-                  {{ roleOption }}
+                <option v-for="roleOption in roleOptions" :key="roleOption.value" :value="roleOption.value">
+                  {{ roleOption.label }}
                 </option>
               </select>
             </div>
 
             <div class="col-md-6 mb-3">
-              <label for="register-branch" class="form-label">Home branch</label>
+              <label for="register-branch" class="form-label">Preferred support hub</label>
               <select id="register-branch" v-model="favoriteBranch" class="form-select">
                 <option v-for="branch in branches" :key="branch" :value="branch">{{ branch }}</option>
               </select>
@@ -231,7 +232,7 @@ const registerUser = async () => {
               v-model="accessCode"
               type="text"
               class="form-control"
-              placeholder="Enter the code provided by the manager"
+              placeholder="Enter the code provided by the staff lead"
               required
               @blur="() => validateField('accessCode')"
               @input="() => validateField('accessCode')"

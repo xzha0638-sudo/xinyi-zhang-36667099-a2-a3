@@ -43,12 +43,12 @@ const signInUser = async () => {
     <div class="container">
       <div class="content-card form-card p-4 p-md-5">
         <span class="section-label mb-3">Authentication</span>
-        <h1 class="h2 mt-3">Sign in to your library account</h1>
+        <h1 class="h2 mt-3">Sign in to your support account</h1>
         <p v-if="route.query.denied" class="alert alert-warning">
           That page is protected. Sign in first, then we will return you to the page you wanted.
         </p>
         <p class="text-muted">
-          Your role is loaded from the profile linked to your email address, so there is no
+          Your role is loaded from the support profile linked to your email address, so there is no
           separate role picker at sign-in time.
         </p>
 

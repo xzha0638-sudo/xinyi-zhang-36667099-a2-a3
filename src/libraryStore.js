@@ -6,16 +6,24 @@ const REQUESTS_KEY = 'nomash-library-requests'
 const REQUEST_STATUSES = ['Pending', 'In review', 'Approved', 'Closed']
 
 export const ACCESS_CODES = {
-  Librarian: 'STACKS-2026',
-  Manager: 'HARBOR-2026'
+  Librarian: 'CARE-2026',
+  Manager: 'BRIDGE-2026'
 }
 
 export const roles = ['Member', 'Librarian', 'Manager']
-export const branches = ['Clayton', 'Caulfield', 'Peninsula', 'Berwick']
+export const roleLabels = {
+  Member: 'Community Member',
+  Librarian: 'Support Worker',
+  Manager: 'Program Manager'
+}
+
+export const getRoleLabel = (role) => roleLabels[role] || role || 'Community Member'
+
+export const branches = ['Clayton Hub', 'Caulfield Hub', 'Peninsula Hub', 'Berwick Hub']
 export const requestTypes = [
-  'Membership application',
-  'Suggest a new book',
-  'Study room enquiry',
+  'Wellbeing intake request',
+  'Interpreter support request',
+  'Workshop registration',
   'Volunteer interest'
 ]
 
@@ -49,14 +57,14 @@ export const getProfileByEmail = (email) => getProfiles()[emailKey(email)] || nu
 export const saveProfile = (profile) => {
   const normalizedEmail = emailKey(profile.email)
   const profiles = getProfiles()
-  profiles[normalizedEmail] = {
-    email: normalizedEmail,
-    displayName: sanitizeText(profile.displayName || normalizedEmail.split('@')[0]),
-    role: profile.role || 'Member',
-    joinedAt: profile.joinedAt || new Date().toISOString(),
-    favoriteBranch: sanitizeText(profile.favoriteBranch || 'Clayton'),
-    accessCode: ''
-  }
+    profiles[normalizedEmail] = {
+      email: normalizedEmail,
+      displayName: sanitizeText(profile.displayName || normalizedEmail.split('@')[0]),
+      role: profile.role || 'Member',
+      joinedAt: profile.joinedAt || new Date().toISOString(),
+      favoriteBranch: sanitizeText(profile.favoriteBranch || 'Clayton Hub'),
+      accessCode: ''
+    }
   writeJson(PROFILES_KEY, profiles)
   return profiles[normalizedEmail]
 }
@@ -71,13 +79,13 @@ export const ensureProfileForUser = (user) => {
     return existing
   }
 
-  return saveProfile({
-    email: user.email,
-    displayName: user.displayName || user.email.split('@')[0],
-    role: 'Member',
-    favoriteBranch: 'Clayton'
-  })
-}
+    return saveProfile({
+      email: user.email,
+      displayName: user.displayName || user.email.split('@')[0],
+      role: 'Member',
+      favoriteBranch: 'Clayton Hub'
+    })
+  }
 
 export const registerLibraryProfile = ({
   email,
@@ -108,6 +116,31 @@ export const registerLibraryProfile = ({
     favoriteBranch,
     accessCode: ''
   })
+}
+
+export const deleteLibraryDataForEmail = (email) => {
+  const normalizedEmail = emailKey(email)
+  if (!normalizedEmail) {
+    return
+  }
+
+  const profiles = getProfiles()
+  delete profiles[normalizedEmail]
+  writeJson(PROFILES_KEY, profiles)
+
+  const ratings = getRatings()
+  Object.keys(ratings).forEach((bookId) => {
+    delete ratings[bookId][normalizedEmail]
+    if (Object.keys(ratings[bookId]).length === 0) {
+      delete ratings[bookId]
+    }
+  })
+  writeJson(RATINGS_KEY, ratings)
+
+  const remainingRequests = readJson(REQUESTS_KEY, []).filter(
+    (request) => emailKey(request.email) !== normalizedEmail
+  )
+  writeJson(REQUESTS_KEY, remainingRequests)
 }
 
 export const getRatings = () => readJson(RATINGS_KEY, {})
@@ -145,12 +178,12 @@ export const getCatalog = () =>
 export const rateBook = ({ bookId, email, rating, note }) => {
   const normalizedEmail = emailKey(email)
   if (!normalizedEmail) {
-    throw new Error('Sign in before rating a book.')
+    throw new Error('Sign in before rating a resource.')
   }
 
   const bookExists = getBooks().some((book) => String(book.id) === String(bookId))
   if (!bookExists) {
-    throw new Error('Book could not be found in the catalog.')
+    throw new Error('Resource could not be found in the directory.')
   }
 
   const safeRating = Number(rating)
@@ -199,7 +232,7 @@ export const submitLibraryRequest = ({ fullName, email, branch, requestType, rea
     throw new Error('Unsupported request type selected.')
   }
   if (!branches.includes(branch)) {
-    throw new Error('Unsupported branch selected.')
+    throw new Error('Unsupported hub selected.')
   }
   if (!agreeToContact) {
     throw new Error('Please agree to be contacted about this request.')
@@ -210,7 +243,7 @@ export const submitLibraryRequest = ({ fullName, email, branch, requestType, rea
     id: crypto.randomUUID(),
     fullName: sanitizeText(fullName),
     email: safeEmail,
-    branch: sanitizeText(branch || 'Clayton'),
+    branch: sanitizeText(branch || 'Clayton Hub'),
     requestType,
     reason: sanitizeText(reason),
     status: 'Pending',
@@ -262,7 +295,9 @@ export const getLibraryStats = () => {
         )
 
   return {
+    totalResources: catalog.length,
     totalBooks: catalog.length,
+    featuredResources: catalog.filter((book) => book.featured).length,
     featuredBooks: catalog.filter((book) => book.featured).length,
     totalRequests: requests.length,
     pendingRequests: requests.filter((request) => request.status === 'Pending').length,

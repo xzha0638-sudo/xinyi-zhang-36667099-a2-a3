@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { activeRole } from '@/auth'
-import { getLibraryStats, getRequestEntries, updateRequestStatus } from '@/libraryStore'
+import { getLibraryStats, getRequestEntries, getRoleLabel, updateRequestStatus } from '@/libraryStore'
 
 const route = useRoute()
 const stats = ref(getLibraryStats())
@@ -42,14 +42,14 @@ const setRequestStatus = (request, status) => {
         <span class="section-label mb-3">Staff only</span>
         <h1 class="h2 mt-3">Staff Hub</h1>
         <p class="text-muted">
-          Librarian and manager accounts can review membership requests and monitor catalog
-          activity from this page.
+          Support worker and program manager accounts can review community support requests and
+          monitor resource activity from this page.
         </p>
 
         <div class="status-grid mt-4">
           <div class="status-card">
             <div class="text-muted small mb-2">Role in use</div>
-            <div class="role-badge">{{ activeRole }}</div>
+            <div class="role-badge">{{ getRoleLabel(activeRole) }}</div>
           </div>
           <div class="status-card">
             <div class="text-muted small mb-2">Average rating</div>
@@ -67,7 +67,7 @@ const setRequestStatus = (request, status) => {
 
         <div class="content-card p-4 mt-4 dashboard-nested-card">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <h2 class="h5">Recent member and service requests</h2>
+            <h2 class="h5">Recent community support requests</h2>
             <div class="status-filter">
               <label for="request-status-filter" class="form-label small mb-1">Status filter</label>
               <select id="request-status-filter" v-model="selectedStatus" class="form-select compact-select">
@@ -82,9 +82,9 @@ const setRequestStatus = (request, status) => {
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Member</th>
+                  <th>Community member</th>
                   <th>Request</th>
-                  <th>Branch</th>
+                  <th>Hub</th>
                   <th>Status</th>
                   <th>Staff action</th>
                 </tr>
@@ -134,8 +134,8 @@ const setRequestStatus = (request, status) => {
             </table>
           </div>
           <p class="small text-muted mt-3 mb-0">
-            Managers can approve requests. Librarians can move requests into review or close them
-            after follow-up.
+            Program managers can approve requests. Support workers can move requests into review or
+            close them after follow-up.
           </p>
         </div>
       </div>
@@ -144,8 +144,8 @@ const setRequestStatus = (request, status) => {
         <span class="section-label mb-3">Security</span>
         <h1 class="h2 mt-3">Security and validation notes</h1>
         <p class="text-muted">
-          This page summarises the main security-conscious decisions built into the NoMash Library
-          application.
+          This page summarises the main security-conscious decisions built into the BridgeWell
+          Health Connect application.
         </p>
 
         <div class="status-grid mt-4">
@@ -159,8 +159,8 @@ const setRequestStatus = (request, status) => {
           <div class="status-card">
             <h2 class="h5">Role checks</h2>
             <p class="mb-0">
-              Librarian and manager pages require the stored role attached to the signed-in email,
-              not a role chosen on the sign-in screen.
+              Support worker and program manager pages require the stored role attached to the
+              signed-in email, not a role chosen on the sign-in screen.
             </p>
           </div>
           <div class="status-card">
@@ -181,8 +181,8 @@ const setRequestStatus = (request, status) => {
             <h2 class="h5">Prototype limitation</h2>
             <p class="mb-0">
               Roles and request records are stored locally for this assessment prototype, but staff
-              access codes are checked and not retained. A production version would move authorisation
-              rules and approval records to a trusted server.
+              access codes are checked and not retained. A production version would move
+              authorisation rules and approval records to a trusted server.
             </p>
           </div>
         </div>

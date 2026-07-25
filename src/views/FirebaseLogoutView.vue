@@ -32,10 +32,10 @@ const handleLogout = async () => {
     <div class="container">
       <div class="content-card form-card p-4 p-md-5">
         <span class="section-label mb-3">Session</span>
-        <h1 class="h2 mt-3">Sign out of NoMash Library</h1>
+        <h1 class="h2 mt-3">Sign out of BridgeWell Health Connect</h1>
         <p class="text-muted">
-          Sign out to return to the public catalog and protect access to member-only pages on a
-          shared device.
+          Sign out to return to the public resource directory and protect access to member-only
+          pages on a shared device.
         </p>
 
         <div class="status-card mb-4">

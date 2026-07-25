@@ -26,11 +26,18 @@ const genres = computed(() => ['All', ...new Set(catalog.value.map((book) => boo
 const filteredCatalog = computed(() =>
   catalog.value.filter((book) => {
     const searchTerm = search.value.toLowerCase().trim()
+    const searchableText = [
+      book.title,
+      book.author,
+      book.branch,
+      book.genre,
+      book.summary,
+      ...(book.keywords || [])
+    ]
+      .join(' ')
+      .toLowerCase()
     const matchesSearch =
-      !searchTerm ||
-      book.title.toLowerCase().includes(searchTerm) ||
-      book.author.toLowerCase().includes(searchTerm) ||
-      book.branch.toLowerCase().includes(searchTerm)
+      !searchTerm || searchableText.includes(searchTerm)
     const matchesGenre = selectedGenre.value === 'All' || book.genre === selectedGenre.value
     const matchesAvailability =
       availabilityFilter.value === 'All' ||
@@ -85,20 +92,20 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
     <div class="container">
       <div class="content-card p-4 p-md-5">
         <span class="section-label mb-3">Business Requirement B + C.3</span>
-        <h1 class="h2 mt-3">Dynamic library catalog</h1>
+        <h1 class="h2 mt-3">Dynamic health resource directory</h1>
         <p class="text-muted">
-          The catalog below is rendered from structured JSON data. Signed-in members can rate a
-          book, and the average updates across the interface.
+          The directory below is rendered from structured JSON data. Signed-in community members can
+          rate a support resource, and the average updates across the interface.
         </p>
 
         <div class="row mt-4">
           <div class="col-md-6 mb-3">
-            <label class="form-label" for="catalog-search">Search the catalog</label>
+            <label class="form-label" for="catalog-search">Search the directory</label>
             <input
               id="catalog-search"
               v-model="search"
               class="form-control"
-              placeholder="Try a title, author, or branch"
+              placeholder="Try a title, provider, topic, hub, or keyword"
             />
           </div>
           <div class="col-md-3 mb-3">
@@ -118,7 +125,7 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
         </div>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-2">
-          <p class="text-muted mb-0">Showing {{ filteredCatalog.length }} of {{ catalog.length }} books.</p>
+          <p class="text-muted mb-0">Showing {{ filteredCatalog.length }} of {{ catalog.length }} resources.</p>
           <button type="button" class="btn btn-outline-dark btn-sm" @click="clearFilters">
             Clear filters
           </button>
@@ -145,7 +152,7 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
             <p class="mt-3 mb-3">{{ book.summary }}</p>
 
             <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-              <span class="badge-soft">Copies available: {{ book.availableCopies }}</span>
+              <span class="badge-soft">Open places: {{ book.availableCopies }}</span>
               <span v-if="book.featured" class="badge-soft badge-highlight">Featured</span>
               <span v-if="myRatingFor(book.id)" class="badge-soft">
                 Your rating: {{ myRatingFor(book.id) }}/5
@@ -153,7 +160,7 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
             </div>
 
             <div class="mb-3">
-              <div class="small text-muted mb-2">Rate this title</div>
+              <div class="small text-muted mb-2">Rate this resource</div>
               <div class="star-row">
                 <button
                   v-for="star in 5"
@@ -171,14 +178,14 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
             </div>
 
             <div class="mb-3">
-              <label class="form-label" :for="`note-${book.id}`">Optional short review</label>
+              <label class="form-label" :for="`note-${book.id}`">Optional short feedback</label>
               <textarea
                 :id="`note-${book.id}`"
                 v-model="reviewNotes[book.id]"
                 rows="2"
                 class="form-control"
                 maxlength="160"
-                placeholder="Share one short sentence about the book"
+                placeholder="Share one short sentence about how useful this resource is"
               ></textarea>
               <div class="form-text text-end">{{ (reviewNotes[book.id] || '').length }}/160</div>
             </div>
@@ -188,13 +195,13 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
             </button>
 
             <p v-if="book.latestReview" class="small text-muted mb-0">
-              Latest review: "{{ book.latestReview }}"
+              Latest feedback: "{{ book.latestReview }}"
             </p>
           </article>
         </div>
 
         <p v-if="!filteredCatalog.length" class="alert alert-warning mt-4">
-          No catalog records match the current search and filter.
+          No resources match the current search and filter.
         </p>
       </div>
     </div>

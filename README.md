@@ -1,9 +1,9 @@
-# NoMash Library A2
+# BridgeWell Health Connect A2
 
 Student: Xinyi Zhang  
 Student number: 36667099
 
-NoMash Library is a Vue 3 web application for managing a small campus library prototype. It includes dynamic JSON catalog data, user input validation, Firebase authentication, role-based page protection, request workflows, and a member rating feature.
+BridgeWell Health Connect is a Vue 3 web application prototype for a health charity that supports migrant communities. It includes dynamic JSON resource data, user input validation, Firebase authentication, role-based page protection, support request workflows, and a community rating feature.
 
 ## Run The Project
 
@@ -16,36 +16,36 @@ NoMash Library is a Vue 3 web application for managing a small campus library pr
 ## Demo Routes
 
 - `/` shows the application overview and live snapshot statistics
-- `/catalog` loads books from JSON and allows signed-in users to rate titles
-- `/join` validates and stores membership or service requests
-- `/firebase-register` creates Firebase accounts and local library profiles
+- `/catalog` loads health resources from JSON and allows signed-in users to rate usefulness
+- `/join` validates and stores support or intake requests
+- `/firebase-register` creates Firebase accounts and local support profiles
 - `/firebase-signin` signs users in and loads their stored role
 - `/dashboard` shows the protected member dashboard
-- `/staff-hub` is restricted to Librarian and Manager profiles
+- `/staff-hub` is restricted to Support Worker and Program Manager profiles
 - `/security` documents validation, access control, and storage decisions
 
 ## Role Testing
 
-Member accounts do not need an access code.
+Community member accounts do not need an access code.
 
 Staff access codes for the local prototype:
 
-- Librarian: `STACKS-2026`
-- Manager: `HARBOR-2026`
+- Support Worker: `CARE-2026`
+- Program Manager: `BRIDGE-2026`
 
-Managers can approve service requests. Librarians can move requests into review or close them after follow-up. Staff access codes are validated during registration and are not stored in browser storage.
+Program Managers can approve support requests. Support Workers can move requests into review or close them after follow-up. Staff access codes are validated during registration and are not stored in browser storage.
 
 ## Notes
 
-The app uses local browser storage for prototype-only library profiles, ratings, and service requests. Firebase is used for email/password authentication. This is suitable for an assessment prototype, not for a production library system.
+The app uses local browser storage for prototype-only support profiles, ratings, and service requests. Firebase is used for email/password authentication. This is suitable for an assessment prototype, not for a production charity platform.
 
 ## Video Demo Checklist
 
 1. Open the home page and show the live application snapshot.
-2. Register a Member account and show validation feedback if fields are incomplete.
+2. Register a Community Member account and show validation feedback if fields are incomplete.
 3. Sign in and open the protected dashboard.
-4. Submit a membership or service request from the Join page.
-5. Open the catalog, search/filter JSON data, and save a book rating.
-6. Register or sign in as a Manager using `HARBOR-2026`.
+4. Submit a support or intake request from the Support page.
+5. Open the resource directory, search/filter JSON data, and save a usefulness rating.
+6. Register or sign in as a Program Manager using `BRIDGE-2026`.
 7. Open Staff Hub, filter requests, and approve a request.
 8. Show the Security page and explain the prototype security limitation.

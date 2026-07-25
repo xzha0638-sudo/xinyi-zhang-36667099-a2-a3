@@ -5,8 +5,8 @@ import { branches, getRequestEntries, requestTypes, submitLibraryRequest } from 
 const formData = ref({
   fullName: '',
   email: '',
-  branch: 'Clayton',
-  requestType: 'Membership application',
+  branch: 'Clayton Hub',
+  requestType: 'Wellbeing intake request',
   reason: '',
   agreeToContact: false
 })
@@ -61,8 +61,8 @@ const clearForm = () => {
   formData.value = {
     fullName: '',
     email: '',
-    branch: 'Clayton',
-    requestType: 'Membership application',
+    branch: 'Clayton Hub',
+    requestType: 'Wellbeing intake request',
     reason: '',
     agreeToContact: false
   }
@@ -92,7 +92,7 @@ const submitForm = () => {
         reason: formData.value.reason,
         agreeToContact: formData.value.agreeToContact
       })
-      feedbackMessage.value = 'Your request has been recorded for staff review.'
+      feedbackMessage.value = 'Your support request has been recorded for staff review.'
       refreshRequests()
       clearForm()
     } catch (error) {
@@ -143,7 +143,7 @@ onMounted(refreshRequests)
             </select>
           </div>
           <div class="col-md-6">
-            <label for="request-branch" class="form-label">Preferred branch</label>
+            <label for="request-branch" class="form-label">Preferred support hub</label>
             <select id="request-branch" v-model="formData.branch" class="form-select">
               <option v-for="branch in branches" :key="branch" :value="branch">{{ branch }}</option>
             </select>
@@ -175,9 +175,9 @@ onMounted(refreshRequests)
             type="checkbox"
             @change="() => validateContactConsent(true)"
           />
-          <label class="form-check-label" for="request-contact">
-            I agree to be contacted about this request.
-          </label>
+            <label class="form-check-label" for="request-contact">
+            I agree to be contacted about this support request.
+            </label>
         </div>
         <div v-if="errors.agreeToContact" class="text-danger mb-3">{{ errors.agreeToContact }}</div>
 
@@ -192,12 +192,12 @@ onMounted(refreshRequests)
     </div>
 
     <div class="col-lg-5 mt-4 mt-lg-0">
-      <div class="status-card h-100">
-        <h2 class="h5">Recent requests</h2>
-        <p class="text-muted">
-          Requests are stored in the browser for this prototype so staff can review them from the
-          protected hub.
-        </p>
+        <div class="status-card h-100">
+          <h2 class="h5">Recent support requests</h2>
+          <p class="text-muted">
+            Requests are stored in the browser for this prototype so support staff can review them
+            from the protected hub.
+          </p>
         <div class="table-wrap mt-3">
           <table class="data-table">
             <thead>
@@ -214,7 +214,7 @@ onMounted(refreshRequests)
                 <td><span class="status-pill">{{ request.status }}</span></td>
               </tr>
               <tr v-if="!requests.length">
-                <td colspan="3" class="text-muted">No requests have been submitted yet.</td>
+                <td colspan="3" class="text-muted">No support requests have been submitted yet.</td>
               </tr>
             </tbody>
           </table>

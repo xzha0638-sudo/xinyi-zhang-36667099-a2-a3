@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { deleteUser, onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth } from './firebase'
-import { ensureProfileForUser, saveProfile } from './libraryStore'
+import { deleteLibraryDataForEmail, ensureProfileForUser, saveProfile } from './libraryStore'
 
 export const currentUser = ref(null)
 export const authReady = ref(false)
@@ -51,5 +51,19 @@ onAuthStateChanged(auth, (user) => {
 
 export const logoutUser = async () => {
   await signOut(auth)
+  currentProfile.value = null
+}
+
+export const deleteCurrentAccount = async () => {
+  const firebaseUser = auth.currentUser
+  const email = firebaseUser?.email
+
+  if (!firebaseUser || !email) {
+    throw new Error('No signed-in account is available to delete.')
+  }
+
+  await deleteUser(firebaseUser)
+  deleteLibraryDataForEmail(email)
+  currentUser.value = null
   currentProfile.value = null
 }
