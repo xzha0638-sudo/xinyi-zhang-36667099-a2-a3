@@ -9,6 +9,7 @@ const router = useRouter()
 const catalog = ref([])
 const search = ref('')
 const selectedGenre = ref('All')
+const availabilityFilter = ref('All')
 const feedbackMessage = ref('')
 const errorMessage = ref('')
 const reviewNotes = ref({})
@@ -24,18 +25,30 @@ const genres = computed(() => ['All', ...new Set(catalog.value.map((book) => boo
 
 const filteredCatalog = computed(() =>
   catalog.value.filter((book) => {
+    const searchTerm = search.value.toLowerCase().trim()
     const matchesSearch =
-      book.title.toLowerCase().includes(search.value.toLowerCase()) ||
-      book.author.toLowerCase().includes(search.value.toLowerCase()) ||
-      book.branch.toLowerCase().includes(search.value.toLowerCase())
+      !searchTerm ||
+      book.title.toLowerCase().includes(searchTerm) ||
+      book.author.toLowerCase().includes(searchTerm) ||
+      book.branch.toLowerCase().includes(searchTerm)
     const matchesGenre = selectedGenre.value === 'All' || book.genre === selectedGenre.value
-    return matchesSearch && matchesGenre
+    const matchesAvailability =
+      availabilityFilter.value === 'All' ||
+      (availabilityFilter.value === 'Available' && book.availableCopies > 0) ||
+      (availabilityFilter.value === 'Featured' && book.featured)
+    return matchesSearch && matchesGenre && matchesAvailability
   })
 )
 
 const myRatingFor = (bookId) => getMyRating({ bookId, email: currentUser.value?.email })?.rating || 0
 
 const chosenRatingFor = (bookId) => selectedRatings.value[bookId] || myRatingFor(bookId)
+
+const clearFilters = () => {
+  search.value = ''
+  selectedGenre.value = 'All'
+  availabilityFilter.value = 'All'
+}
 
 const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
   feedbackMessage.value = ''
@@ -57,6 +70,7 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
       rating,
       note: reviewNotes.value[bookId] || ''
     })
+    selectedRatings.value[bookId] = rating
     reviewNotes.value[bookId] = ''
     feedbackMessage.value = 'Your rating was saved successfully.'
     refreshCatalog()
@@ -78,7 +92,7 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
         </p>
 
         <div class="row mt-4">
-          <div class="col-md-8 mb-3">
+          <div class="col-md-6 mb-3">
             <label class="form-label" for="catalog-search">Search the catalog</label>
             <input
               id="catalog-search"
@@ -87,12 +101,27 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
               placeholder="Try a title, author, or branch"
             />
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-md-3 mb-3">
             <label class="form-label" for="catalog-genre">Genre</label>
             <select id="catalog-genre" v-model="selectedGenre" class="form-select">
               <option v-for="genre in genres" :key="genre" :value="genre">{{ genre }}</option>
             </select>
           </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label" for="catalog-availability">Availability</label>
+            <select id="catalog-availability" v-model="availabilityFilter" class="form-select">
+              <option>All</option>
+              <option>Available</option>
+              <option>Featured</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-2">
+          <p class="text-muted mb-0">Showing {{ filteredCatalog.length }} of {{ catalog.length }} books.</p>
+          <button type="button" class="btn btn-outline-dark btn-sm" @click="clearFilters">
+            Clear filters
+          </button>
         </div>
 
         <p v-if="feedbackMessage" class="alert alert-success">{{ feedbackMessage }}</p>
@@ -104,7 +133,7 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
               <div>
                 <div class="section-label mb-2">{{ book.genre }}</div>
                 <h2 class="h5 mb-1">{{ book.title }}</h2>
-                <p class="text-muted mb-2">{{ book.author }} · {{ book.year }} · {{ book.branch }}</p>
+                <p class="text-muted mb-2">{{ book.author }} - {{ book.year }} - {{ book.branch }}</p>
               </div>
               <div class="text-end">
                 <div class="small text-muted">Avg. rating</div>
@@ -133,9 +162,10 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
                   class="star-button"
                   :class="{ selected: star <= chosenRatingFor(book.id) }"
                   :aria-label="`Choose ${star} star rating for ${book.title}`"
+                  :aria-pressed="star <= chosenRatingFor(book.id)"
                   @click="selectedRatings[book.id] = star"
                 >
-                  ★
+                  &#9733;
                 </button>
               </div>
             </div>

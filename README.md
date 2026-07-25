@@ -33,8 +33,19 @@ Staff access codes for the local prototype:
 - Librarian: `STACKS-2026`
 - Manager: `HARBOR-2026`
 
-Managers can approve service requests. Librarians can move requests into review or close them after follow-up.
+Managers can approve service requests. Librarians can move requests into review or close them after follow-up. Staff access codes are validated during registration and are not stored in browser storage.
 
 ## Notes
 
 The app uses local browser storage for prototype-only library profiles, ratings, and service requests. Firebase is used for email/password authentication. This is suitable for an assessment prototype, not for a production library system.
+
+## Video Demo Checklist
+
+1. Open the home page and show the live application snapshot.
+2. Register a Member account and show validation feedback if fields are incomplete.
+3. Sign in and open the protected dashboard.
+4. Submit a membership or service request from the Join page.
+5. Open the catalog, search/filter JSON data, and save a book rating.
+6. Register or sign in as a Manager using `HARBOR-2026`.
+7. Open Staff Hub, filter requests, and approve a request.
+8. Show the Security page and explain the prototype security limitation.

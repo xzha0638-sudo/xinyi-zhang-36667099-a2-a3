@@ -1,10 +1,10 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { refreshCurrentProfile } from '@/auth'
 import { auth, isFirebaseConfigured } from '@/firebase'
-import { registerLibraryProfile, roles } from '@/libraryStore'
+import { branches, registerLibraryProfile, roles } from '@/libraryStore'
 
 const router = useRouter()
 
@@ -41,6 +41,38 @@ const passwordStrengthLabel = computed(() => {
   if (passwordStrength.value <= 3) return 'Good'
   return 'Strong'
 })
+
+const validateField = (field) => {
+  if (field === 'fullName') {
+    errors.value.fullName = fullName.value.trim().length < 3 ? 'Please enter at least 3 characters.' : null
+  }
+
+  if (field === 'email') {
+    errors.value.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)
+      ? null
+      : 'Please enter a valid email address.'
+  }
+
+  if (field === 'password') {
+    errors.value.password = password.value.length >= 8 ? null : 'Password must be at least 8 characters.'
+    if (confirmPassword.value) {
+      validateField('confirmPassword')
+    }
+  }
+
+  if (field === 'confirmPassword') {
+    errors.value.confirmPassword = password.value === confirmPassword.value ? null : 'Passwords do not match.'
+  }
+
+  if (field === 'accessCode') {
+    errors.value.accessCode =
+      role.value === 'Member' || accessCode.value.trim()
+        ? null
+        : 'Staff accounts need the correct access code.'
+  }
+}
+
+watch(role, () => validateField('accessCode'))
 
 const validateForm = () => {
   errors.value = {
@@ -123,6 +155,8 @@ const registerUser = async () => {
               class="form-control"
               placeholder="Xinyi Zhang"
               required
+              @blur="() => validateField('fullName')"
+              @input="() => validateField('fullName')"
             />
             <div v-if="errors.fullName" class="text-danger">{{ errors.fullName }}</div>
           </div>
@@ -136,6 +170,8 @@ const registerUser = async () => {
               class="form-control"
               placeholder="student@monash.edu"
               required
+              @blur="() => validateField('email')"
+              @input="() => validateField('email')"
             />
             <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
           </div>
@@ -153,10 +189,7 @@ const registerUser = async () => {
             <div class="col-md-6 mb-3">
               <label for="register-branch" class="form-label">Home branch</label>
               <select id="register-branch" v-model="favoriteBranch" class="form-select">
-                <option>Clayton</option>
-                <option>Caulfield</option>
-                <option>Peninsula</option>
-                <option>Berwick</option>
+                <option v-for="branch in branches" :key="branch" :value="branch">{{ branch }}</option>
               </select>
             </div>
           </div>
@@ -170,6 +203,8 @@ const registerUser = async () => {
               class="form-control"
               placeholder="At least 8 characters"
               required
+              @blur="() => validateField('password')"
+              @input="() => validateField('password')"
             />
             <div class="form-text">Strength: {{ passwordStrengthLabel }}</div>
             <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
@@ -183,6 +218,8 @@ const registerUser = async () => {
               type="password"
               class="form-control"
               required
+              @blur="() => validateField('confirmPassword')"
+              @input="() => validateField('confirmPassword')"
             />
             <div v-if="errors.confirmPassword" class="text-danger">{{ errors.confirmPassword }}</div>
           </div>
@@ -196,6 +233,8 @@ const registerUser = async () => {
               class="form-control"
               placeholder="Enter the code provided by the manager"
               required
+              @blur="() => validateField('accessCode')"
+              @input="() => validateField('accessCode')"
             />
             <div v-if="errors.accessCode" class="text-danger">{{ errors.accessCode }}</div>
           </div>

@@ -7,8 +7,17 @@ import { getLibraryStats, getRequestEntries, updateRequestStatus } from '@/libra
 const route = useRoute()
 const stats = ref(getLibraryStats())
 const requests = ref(getRequestEntries())
+const selectedStatus = ref('All')
+const actionMessage = ref('')
 const isStaffHub = computed(() => route.name === 'StaffHub')
 const canApproveRequests = computed(() => activeRole.value === 'Manager')
+const statusOptions = ['All', 'Pending', 'In review', 'Approved', 'Closed']
+
+const filteredRequests = computed(() =>
+  selectedStatus.value === 'All'
+    ? requests.value
+    : requests.value.filter((request) => request.status === selectedStatus.value)
+)
 
 const refreshStaffData = () => {
   stats.value = getLibraryStats()
@@ -16,8 +25,13 @@ const refreshStaffData = () => {
 }
 
 const setRequestStatus = (request, status) => {
-  updateRequestStatus({ id: request.id, status })
-  refreshStaffData()
+  try {
+    updateRequestStatus({ id: request.id, status })
+    refreshStaffData()
+    actionMessage.value = `${request.fullName}'s request is now ${status}.`
+  } catch (error) {
+    actionMessage.value = error.message
+  }
 }
 </script>
 
@@ -52,7 +66,18 @@ const setRequestStatus = (request, status) => {
         </div>
 
         <div class="content-card p-4 mt-4 dashboard-nested-card">
-          <h2 class="h5">Recent member and service requests</h2>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <h2 class="h5">Recent member and service requests</h2>
+            <div class="status-filter">
+              <label for="request-status-filter" class="form-label small mb-1">Status filter</label>
+              <select id="request-status-filter" v-model="selectedStatus" class="form-select compact-select">
+                <option v-for="status in statusOptions" :key="status" :value="status">{{ status }}</option>
+              </select>
+            </div>
+          </div>
+
+          <p v-if="actionMessage" class="alert alert-success mt-3">{{ actionMessage }}</p>
+
           <div class="table-wrap mt-3">
             <table class="data-table">
               <thead>
@@ -65,7 +90,7 @@ const setRequestStatus = (request, status) => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="request in requests" :key="request.id">
+                <tr v-for="request in filteredRequests" :key="request.id">
                   <td>
                     <strong>{{ request.fullName }}</strong>
                     <div class="small text-muted">{{ request.email }}</div>
@@ -78,6 +103,7 @@ const setRequestStatus = (request, status) => {
                       <button
                         type="button"
                         class="btn btn-outline-dark btn-sm"
+                        :disabled="request.status === 'In review'"
                         @click="setRequestStatus(request, 'In review')"
                       >
                         Review
@@ -85,7 +111,7 @@ const setRequestStatus = (request, status) => {
                       <button
                         type="button"
                         class="btn btn-outline-dark btn-sm"
-                        :disabled="!canApproveRequests"
+                        :disabled="!canApproveRequests || request.status === 'Approved'"
                         @click="setRequestStatus(request, 'Approved')"
                       >
                         Approve
@@ -93,6 +119,7 @@ const setRequestStatus = (request, status) => {
                       <button
                         type="button"
                         class="btn btn-outline-dark btn-sm"
+                        :disabled="request.status === 'Closed'"
                         @click="setRequestStatus(request, 'Closed')"
                       >
                         Close
@@ -100,8 +127,8 @@ const setRequestStatus = (request, status) => {
                     </div>
                   </td>
                 </tr>
-                <tr v-if="!requests.length">
-                  <td colspan="5" class="text-muted">No service requests have been submitted yet.</td>
+                <tr v-if="!filteredRequests.length">
+                  <td colspan="5" class="text-muted">No service requests match this filter.</td>
                 </tr>
               </tbody>
             </table>
@@ -148,6 +175,14 @@ const setRequestStatus = (request, status) => {
             <p class="mb-0">
               Service requests require contact consent, email format checks, and length limits
               before being saved to browser storage.
+            </p>
+          </div>
+          <div class="status-card">
+            <h2 class="h5">Prototype limitation</h2>
+            <p class="mb-0">
+              Roles and request records are stored locally for this assessment prototype, but staff
+              access codes are checked and not retained. A production version would move authorisation
+              rules and approval records to a trusted server.
             </p>
           </div>
         </div>

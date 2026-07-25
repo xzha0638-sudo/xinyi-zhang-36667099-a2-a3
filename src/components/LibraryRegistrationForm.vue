@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getRequestEntries, submitLibraryRequest } from '@/libraryStore'
+import { branches, getRequestEntries, requestTypes, submitLibraryRequest } from '@/libraryStore'
 
 const formData = ref({
   fullName: '',
@@ -139,19 +139,13 @@ onMounted(refreshRequests)
           <div class="col-md-6">
             <label for="request-type" class="form-label">Request type</label>
             <select id="request-type" v-model="formData.requestType" class="form-select">
-              <option>Membership application</option>
-              <option>Suggest a new book</option>
-              <option>Study room enquiry</option>
-              <option>Volunteer interest</option>
+              <option v-for="type in requestTypes" :key="type" :value="type">{{ type }}</option>
             </select>
           </div>
           <div class="col-md-6">
             <label for="request-branch" class="form-label">Preferred branch</label>
             <select id="request-branch" v-model="formData.branch" class="form-select">
-              <option>Clayton</option>
-              <option>Caulfield</option>
-              <option>Peninsula</option>
-              <option>Berwick</option>
+              <option v-for="branch in branches" :key="branch" :value="branch">{{ branch }}</option>
             </select>
           </div>
         </div>

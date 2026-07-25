@@ -499,6 +499,14 @@ code {
   overflow-x: auto;
 }
 
+.status-filter {
+  min-width: 180px;
+}
+
+.compact-select {
+  min-width: 180px;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -560,6 +568,10 @@ code {
 }
 
 @media (min-width: 768px) {
+  .col-md-3 {
+    width: 25%;
+  }
+
   .col-md-4 {
     width: 33.3333%;
   }

@@ -11,6 +11,13 @@ export const ACCESS_CODES = {
 }
 
 export const roles = ['Member', 'Librarian', 'Manager']
+export const branches = ['Clayton', 'Caulfield', 'Peninsula', 'Berwick']
+export const requestTypes = [
+  'Membership application',
+  'Suggest a new book',
+  'Study room enquiry',
+  'Volunteer interest'
+]
 
 const emailKey = (email) => (email || '').trim().toLowerCase()
 
@@ -48,7 +55,7 @@ export const saveProfile = (profile) => {
     role: profile.role || 'Member',
     joinedAt: profile.joinedAt || new Date().toISOString(),
     favoriteBranch: sanitizeText(profile.favoriteBranch || 'Clayton'),
-    accessCode: profile.accessCode || ''
+    accessCode: ''
   }
   writeJson(PROFILES_KEY, profiles)
   return profiles[normalizedEmail]
@@ -99,7 +106,7 @@ export const registerLibraryProfile = ({
     displayName,
     role,
     favoriteBranch,
-    accessCode: role === 'Member' ? '' : accessCode
+    accessCode: ''
   })
 }
 
@@ -139,6 +146,11 @@ export const rateBook = ({ bookId, email, rating, note }) => {
   const normalizedEmail = emailKey(email)
   if (!normalizedEmail) {
     throw new Error('Sign in before rating a book.')
+  }
+
+  const bookExists = getBooks().some((book) => String(book.id) === String(bookId))
+  if (!bookExists) {
+    throw new Error('Book could not be found in the catalog.')
   }
 
   const safeRating = Number(rating)
@@ -182,6 +194,12 @@ export const submitLibraryRequest = ({ fullName, email, branch, requestType, rea
   }
   if (sanitizeText(reason).length > 280) {
     throw new Error('Request details must stay under 280 characters.')
+  }
+  if (!requestTypes.includes(requestType)) {
+    throw new Error('Unsupported request type selected.')
+  }
+  if (!branches.includes(branch)) {
+    throw new Error('Unsupported branch selected.')
   }
   if (!agreeToContact) {
     throw new Error('Please agree to be contacted about this request.')
