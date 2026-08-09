@@ -17,9 +17,42 @@ export const roleLabels = {
   Manager: 'Program Manager'
 }
 
-export const getRoleLabel = (role) => roleLabels[role] || role || 'Community Member'
+export const supportHubs = [
+  {
+    name: 'Clayton Hub',
+    suburb: 'Clayton',
+    address: 'Clayton Community Centre, 9-15 Cooke St, Clayton VIC',
+    latitude: -37.911,
+    longitude: 145.126,
+    accessibility: ['Step-free entry', 'Quiet waiting area', 'Interpreter-friendly check-in']
+  },
+  {
+    name: 'Caulfield Hub',
+    suburb: 'Caulfield',
+    address: 'Caulfield Library, 341 Kooyong Rd, Caulfield VIC',
+    latitude: -37.879,
+    longitude: 145.039,
+    accessibility: ['Accessible toilets', 'Public transport nearby', 'Large-print support sheets']
+  },
+  {
+    name: 'Peninsula Hub',
+    suburb: 'Frankston',
+    address: 'Peninsula Community Space, 21 Young St, Frankston VIC',
+    latitude: -38.145,
+    longitude: 145.124,
+    accessibility: ['Wheelchair access', 'Parking nearby', 'Family waiting space']
+  },
+  {
+    name: 'Berwick Hub',
+    suburb: 'Berwick',
+    address: 'Berwick Resource Centre, 15-17 Peel St, Berwick VIC',
+    latitude: -38.033,
+    longitude: 145.345,
+    accessibility: ['Level entrance', 'Quiet room', 'Community transport access']
+  }
+]
 
-export const branches = ['Clayton Hub', 'Caulfield Hub', 'Peninsula Hub', 'Berwick Hub']
+export const branches = supportHubs.map((hub) => hub.name)
 export const requestTypes = [
   'Wellbeing intake request',
   'Interpreter support request',
@@ -47,6 +80,46 @@ export const sanitizeText = (value) =>
     .replace(/[<>]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
+
+export const getRoleLabel = (role) => roleLabels[role] || role || 'Community Member'
+
+const toRadians = (degrees) => (degrees * Math.PI) / 180
+
+const haversineDistanceKm = (start, end) => {
+  const earthRadiusKm = 6371
+  const latitudeDelta = toRadians(end.latitude - start.latitude)
+  const longitudeDelta = toRadians(end.longitude - start.longitude)
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(toRadians(start.latitude)) *
+      Math.cos(toRadians(end.latitude)) *
+      Math.sin(longitudeDelta / 2) ** 2
+  return 2 * earthRadiusKm * Math.asin(Math.sqrt(a))
+}
+
+export const getSupportHubByName = (hubName) =>
+  supportHubs.find((hub) => hub.name === hubName) || supportHubs[0]
+
+export const getNearestSupportHub = (coords) => {
+  if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
+    return {
+      ...supportHubs[0],
+      distanceKm: null
+    }
+  }
+
+  const currentPoint = {
+    latitude: coords.latitude,
+    longitude: coords.longitude
+  }
+
+  return supportHubs
+    .map((hub) => ({
+      ...hub,
+      distanceKm: Number(haversineDistanceKm(currentPoint, hub).toFixed(1))
+    }))
+    .sort((first, second) => first.distanceKm - second.distanceKm)[0]
+}
 
 export const getBooks = () => books.map((book) => ({ ...book }))
 
@@ -79,13 +152,13 @@ export const ensureProfileForUser = (user) => {
     return existing
   }
 
-    return saveProfile({
-      email: user.email,
-      displayName: user.displayName || user.email.split('@')[0],
-      role: 'Member',
-      favoriteBranch: 'Clayton Hub'
-    })
-  }
+  return saveProfile({
+    email: user.email,
+    displayName: user.displayName || user.email.split('@')[0],
+    role: 'Member',
+    favoriteBranch: 'Clayton Hub'
+  })
+}
 
 export const registerLibraryProfile = ({
   email,

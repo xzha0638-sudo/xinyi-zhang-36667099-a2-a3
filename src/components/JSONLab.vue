@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { currentUser } from '@/auth'
 import { getCatalog, getMyRating, rateBook } from '@/libraryStore'
+import { downloadCsv } from '@/utils/csv'
 
 const router = useRouter()
 
@@ -22,6 +23,19 @@ const refreshCatalog = () => {
 watch(currentUser, refreshCatalog, { immediate: true })
 
 const genres = computed(() => ['All', ...new Set(catalog.value.map((book) => book.genre))])
+
+const csvRows = computed(() =>
+  filteredCatalog.value.map((book) => [
+    book.title,
+    book.author,
+    book.year,
+    book.genre,
+    book.branch,
+    book.availableCopies,
+    book.averageRating || '0.0',
+    book.featured ? 'Yes' : 'No'
+  ])
+)
 
 const filteredCatalog = computed(() =>
   catalog.value.filter((book) => {
@@ -55,6 +69,14 @@ const clearFilters = () => {
   search.value = ''
   selectedGenre.value = 'All'
   availabilityFilter.value = 'All'
+}
+
+const exportVisibleCatalog = () => {
+  downloadCsv(
+    'bridgewell-resource-directory.csv',
+    ['Title', 'Author', 'Year', 'Topic', 'Hub', 'Available copies', 'Average rating', 'Featured'],
+    csvRows.value
+  )
 }
 
 const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
@@ -126,9 +148,14 @@ const saveRating = (bookId, rating = selectedRatings.value[bookId]) => {
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-2">
           <p class="text-muted mb-0">Showing {{ filteredCatalog.length }} of {{ catalog.length }} resources.</p>
-          <button type="button" class="btn btn-outline-dark btn-sm" @click="clearFilters">
-            Clear filters
-          </button>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-dark btn-sm" @click="clearFilters">
+              Clear filters
+            </button>
+            <button type="button" class="btn btn-dark btn-sm" @click="exportVisibleCatalog">
+              Export CSV
+            </button>
+          </div>
         </div>
 
         <p v-if="feedbackMessage" class="alert alert-success">{{ feedbackMessage }}</p>

@@ -9,7 +9,7 @@ const roleLabel = computed(() => getRoleLabel(activeRole.value))
 </script>
 
 <template>
-  <nav class="nav-shell">
+  <nav class="nav-shell" aria-label="Primary">
     <div class="container py-3">
       <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
         <div>

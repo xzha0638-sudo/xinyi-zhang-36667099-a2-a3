@@ -3,12 +3,14 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { activeRole } from '@/auth'
 import { getLibraryStats, getRequestEntries, getRoleLabel, updateRequestStatus } from '@/libraryStore'
+import { downloadCsv } from '@/utils/csv'
 
 const route = useRoute()
 const stats = ref(getLibraryStats())
 const requests = ref(getRequestEntries())
 const selectedStatus = ref('All')
 const actionMessage = ref('')
+const exportMessage = ref('')
 const isStaffHub = computed(() => route.name === 'StaffHub')
 const canApproveRequests = computed(() => activeRole.value === 'Manager')
 const statusOptions = ['All', 'Pending', 'In review', 'Approved', 'Closed']
@@ -32,6 +34,23 @@ const setRequestStatus = (request, status) => {
   } catch (error) {
     actionMessage.value = error.message
   }
+}
+
+const exportRequestsCsv = () => {
+  downloadCsv(
+    'bridgewell-support-requests.csv',
+    ['Name', 'Email', 'Request type', 'Hub', 'Status', 'Reason', 'Created at'],
+    requests.value.map((request) => [
+      request.fullName,
+      request.email,
+      request.requestType,
+      request.branch,
+      request.status,
+      request.reason,
+      request.createdAt
+    ])
+  )
+  exportMessage.value = 'CSV export created successfully.'
 }
 </script>
 
@@ -77,6 +96,12 @@ const setRequestStatus = (request, status) => {
           </div>
 
           <p v-if="actionMessage" class="alert alert-success mt-3">{{ actionMessage }}</p>
+          <p v-if="exportMessage" class="alert alert-success mt-3">{{ exportMessage }}</p>
+          <div class="mt-3">
+            <button type="button" class="btn btn-dark btn-sm" @click="exportRequestsCsv">
+              Export requests CSV
+            </button>
+          </div>
 
           <div class="table-wrap mt-3">
             <table class="data-table">

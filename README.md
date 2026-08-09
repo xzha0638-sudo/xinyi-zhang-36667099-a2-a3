@@ -5,6 +5,8 @@ Student number: 36667099
 
 BridgeWell Health Connect is a Vue 3 web application prototype for a health charity that supports migrant communities. It includes dynamic JSON resource data, user input validation, Firebase authentication, role-based page protection, support request workflows, and a community rating feature.
 
+The A3 extension also adds a cloud summary endpoint, CSV export for directory and staff data, geolocation-based hub recommendations, and stronger accessibility support.
+
 ## Run The Project
 
 1. Run `npm install`
@@ -23,6 +25,7 @@ BridgeWell Health Connect is a Vue 3 web application prototype for a health char
 - `/dashboard` shows the protected member dashboard
 - `/staff-hub` is restricted to Support Worker and Program Manager profiles
 - `/security` documents validation, access control, and storage decisions
+- `/api/summary` is a cloud function endpoint used for the home-page snapshot
 
 ## Role Testing
 
@@ -46,6 +49,7 @@ The app uses local browser storage for prototype-only support profiles, ratings,
 3. Sign in and open the protected dashboard.
 4. Submit a support or intake request from the Support page.
 5. Open the resource directory, search/filter JSON data, and save a usefulness rating.
-6. Register or sign in as a Program Manager using `BRIDGE-2026`.
-7. Open Staff Hub, filter requests, and approve a request.
-8. Show the Security page and explain the prototype security limitation.
+6. Use the home-page cloud summary and nearest-hub location feature.
+7. Register or sign in as a Program Manager using `BRIDGE-2026`.
+8. Open Staff Hub, filter requests, export CSV, and approve a request.
+9. Show the Security page and explain the prototype security limitation.
