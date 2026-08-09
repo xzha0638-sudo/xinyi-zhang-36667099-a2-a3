@@ -5,7 +5,7 @@ Student number: 36667099
 
 BridgeWell Health Connect is a Vue 3 web application prototype for a health charity that supports migrant communities. It includes dynamic JSON resource data, user input validation, Firebase authentication, role-based page protection, support request workflows, and a community rating feature.
 
-The A3 extension also adds a cloud summary endpoint, CSV export for directory and staff data, geolocation-based hub recommendations, and stronger accessibility support.
+The A3 extension also adds a cloud summary endpoint, email workflow support, CSV export for directory and staff data, geolocation-based hub recommendations, and stronger accessibility support.
 
 ## Run The Project
 
@@ -20,6 +20,7 @@ The A3 extension also adds a cloud summary endpoint, CSV export for directory an
 - `/` shows the application overview and live snapshot statistics
 - `/catalog` loads health resources from JSON and allows signed-in users to rate usefulness
 - `/join` validates and stores support or intake requests
+- `/contact` prepares an email draft and validates the cloud email workflow
 - `/firebase-register` creates Firebase accounts and local support profiles
 - `/firebase-signin` signs users in and loads their stored role
 - `/dashboard` shows the protected member dashboard
@@ -50,6 +51,7 @@ The app uses local browser storage for prototype-only support profiles, ratings,
 4. Submit a support or intake request from the Support page.
 5. Open the resource directory, search/filter JSON data, and save a usefulness rating.
 6. Use the home-page cloud summary and nearest-hub location feature.
-7. Register or sign in as a Program Manager using `BRIDGE-2026`.
-8. Open Staff Hub, filter requests, export CSV, and approve a request.
-9. Show the Security page and explain the prototype security limitation.
+7. Open the email support page and validate or copy a support email draft.
+8. Register or sign in as a Program Manager using `BRIDGE-2026`.
+9. Open Staff Hub, filter requests, export CSV, and approve a request.
+10. Show the Security page and explain the prototype security limitation.

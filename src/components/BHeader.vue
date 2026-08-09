@@ -27,6 +27,9 @@ const roleLabel = computed(() => getRoleLabel(activeRole.value))
           <li class="nav-item">
             <router-link to="/join" class="nav-link" active-class="active">Support</router-link>
           </li>
+          <li class="nav-item">
+            <router-link to="/contact" class="nav-link" active-class="active">Email support</router-link>
+          </li>
           <li v-if="!signedIn" class="nav-item">
             <router-link to="/firebase-register" class="nav-link" active-class="active">
               Register
