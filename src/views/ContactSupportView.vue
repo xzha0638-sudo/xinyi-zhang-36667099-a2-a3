@@ -8,6 +8,7 @@ const feedbackMessage = ref('')
 const errorMessage = ref('')
 const copyMessage = ref('')
 const requestReference = ref('')
+const attachmentInfo = ref(null)
 
 const form = ref({
   fullName: '',
@@ -31,6 +32,18 @@ watch(
   { immediate: true }
 )
 
+const attachmentSummary = computed(() =>
+  [
+    'BridgeWell Health Connect Support Summary',
+    `Name: ${form.value.fullName || 'Not provided'}`,
+    `Email: ${form.value.email || 'Not provided'}`,
+    `Subject: ${form.value.subject || 'Not provided'}`,
+    `Preferred reply: ${form.value.preferredReply}`,
+    '',
+    form.value.message.trim() || 'Support request description pending.'
+  ].join('\n')
+)
+
 const draftBody = computed(() =>
   [
     `Name: ${form.value.fullName || 'Not provided'}`,
@@ -50,6 +63,17 @@ const mailtoLink = computed(() => {
   return `mailto:${supportEmail}?${params.toString()}`
 })
 
+const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '')
+      resolve(dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl)
+    }
+    reader.onerror = () => reject(new Error('Unable to read the attachment file.'))
+    reader.readAsDataURL(file)
+  })
+
 const validateForm = () => {
   if (form.value.fullName.trim().length < 3) {
     throw new Error('Please enter your full name.')
@@ -65,6 +89,37 @@ const validateForm = () => {
 
   if (form.value.message.trim().length < 15) {
     throw new Error('Please describe your support request in at least 15 characters.')
+  }
+}
+
+const handleAttachmentChange = async (event) => {
+  copyMessage.value = ''
+  errorMessage.value = ''
+  const file = event.target.files?.[0]
+
+  if (!file) {
+    attachmentInfo.value = null
+    return
+  }
+
+  if (file.size > 3 * 1024 * 1024) {
+    errorMessage.value = 'Please keep the optional attachment under 3 MB.'
+    event.target.value = ''
+    attachmentInfo.value = null
+    return
+  }
+
+  try {
+    const content = await fileToBase64(file)
+    attachmentInfo.value = {
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      content,
+      size: file.size
+    }
+  } catch (error) {
+    errorMessage.value = error.message
+    attachmentInfo.value = null
   }
 }
 
@@ -93,7 +148,8 @@ const submitToCloudFunction = async () => {
         email: form.value.email.trim(),
         subject: form.value.subject.trim(),
         message: form.value.message.trim(),
-        preferredReply: form.value.preferredReply
+        preferredReply: form.value.preferredReply,
+        attachment: attachmentInfo.value
       })
     })
 
@@ -104,7 +160,9 @@ const submitToCloudFunction = async () => {
     }
 
     requestReference.value = payload.referenceId
-    feedbackMessage.value = `Support email request prepared successfully. Reference: ${payload.referenceId}`
+    feedbackMessage.value = payload.sent
+      ? `Support email sent successfully. Reference: ${payload.referenceId}`
+      : `Support email request prepared successfully. Reference: ${payload.referenceId}`
   } catch (error) {
     errorMessage.value = error.message
   } finally {
@@ -229,6 +287,23 @@ const copyDraft = async () => {
                 </select>
               </div>
 
+              <div class="mb-4">
+                <label for="contact-attachment" class="form-label">Optional attachment</label>
+                <input
+                  id="contact-attachment"
+                  type="file"
+                  class="form-control"
+                  @change="handleAttachmentChange"
+                />
+                <div class="form-text">
+                  A support summary text attachment will always be generated automatically. You can
+                  also add one optional supporting file under 3 MB.
+                </div>
+                <div v-if="attachmentInfo" class="small text-muted mt-2">
+                  Uploaded file: {{ attachmentInfo.filename }} ({{ Math.ceil(attachmentInfo.size / 1024) }} KB)
+                </div>
+              </div>
+
               <p v-if="feedbackMessage" class="alert alert-success">{{ feedbackMessage }}</p>
               <p v-if="copyMessage" class="alert alert-success">{{ copyMessage }}</p>
               <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
@@ -254,6 +329,12 @@ const copyDraft = async () => {
                 This preview shows the exact message body that will be sent or copied.
               </p>
               <pre class="email-preview">{{ draftBody }}</pre>
+              <h2 class="h5 mt-4">Generated attachment</h2>
+              <p class="text-muted">
+                The cloud workflow includes this text attachment automatically, even if no extra file
+                is uploaded.
+              </p>
+              <pre class="email-preview">{{ attachmentSummary }}</pre>
               <p class="small text-muted mt-3 mb-0">
                 Tip: validate the request first, then use the mail client button in your demo.
               </p>

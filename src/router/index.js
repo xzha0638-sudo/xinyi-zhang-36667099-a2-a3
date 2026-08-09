@@ -8,6 +8,7 @@ const FirebaseRegisterView = () => import('@/views/FirebaseRegisterView.vue')
 const FirebaseSigninView = () => import('@/views/FirebaseSigninView.vue')
 const RolePortalView = () => import('@/views/RolePortalView.vue')
 const AboutView = () => import('@/views/AboutView.vue')
+const MapView = () => import('@/views/MapView.vue')
 const ContactSupportView = () => import('@/views/ContactSupportView.vue')
 const FirebaseLogoutView = () => import('@/views/FirebaseLogoutView.vue')
 const AccessDeniedView = () => import('@/views/AccessDeniedView.vue')
@@ -17,6 +18,7 @@ const routes = [
   { path: '/catalog', name: 'Catalog', component: DataLabView },
   { path: '/join', name: 'Join', component: LoginView },
   { path: '/contact', name: 'Contact', component: ContactSupportView },
+  { path: '/map', name: 'Map', component: MapView },
   { path: '/firebase-register', name: 'FirebaseRegister', component: FirebaseRegisterView },
   { path: '/firebase-signin', name: 'FirebaseSignin', component: FirebaseSigninView },
   {

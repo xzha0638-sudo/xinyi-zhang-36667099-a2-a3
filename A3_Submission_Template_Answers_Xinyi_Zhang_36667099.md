@@ -17,6 +17,7 @@ Important files:
 
 - `src/views/HomeView.vue`
 - `src/views/ContactSupportView.vue`
+- `src/views/MapView.vue`
 - `src/components/JSONLab.vue`
 - `src/views/AboutView.vue`
 - `src/views/RolePortalView.vue`
@@ -56,17 +57,18 @@ Implemented in `ContactSupportView.vue` and `api/contact.js`.
 
 - users can prepare a structured support email
 - the page validates name, email, subject, and message length
-- users can open their mail client or copy the draft
-- the cloud function returns a reference ID for the request
+- a text attachment is generated automatically for the support request
+- users can also upload one optional supporting file
+- when cloud email credentials are configured, the serverless function can send the email through an email API
 
 ### D.3 Interactive table data
 
 Implemented in `JSONLab.vue` and `AboutView.vue`.
 
-- the resource directory is searchable and filterable
-- users can rate resources with live updates
-- staff can review support requests in a table
-- request status can be changed directly from the table
+- the resource directory includes an interactive table
+- the staff hub includes a second interactive table
+- both tables support sorting, searching, and page size limited to 10 rows
+- users can search by individual columns
 
 ### D.4 Deployment to the cloud
 
@@ -87,11 +89,12 @@ Implemented in `api/summary.js` and `api/contact.js`.
 
 ### E.2 Geolocation
 
-Implemented in `HomeView.vue` and `libraryStore.js`.
+Implemented in `MapView.vue`, `HomeView.vue`, and `libraryStore.js`.
 
-- the app can use browser geolocation
-- it finds the nearest support hub from the current position
-- hub accessibility information is shown with the result
+- the app displays a map of support hubs
+- users can search hubs by suburb or accessibility features
+- users can use browser geolocation to select the nearest hub
+- users can open directions to the selected hub
 
 ### E.3 Accessibility
 
@@ -117,8 +120,8 @@ Implemented in `JSONLab.vue` and `AboutView.vue`.
 Implemented through a combined support experience rather than a single isolated feature.
 
 - cloud summary snapshot on the home page
-- nearest-hub recommendation using location
-- email draft workflow with validation and clipboard support
+- map, nearest-hub recommendation, and directions support
+- email workflow with validation and attachment support
 - staff CSV export for reporting
 
 ## Video

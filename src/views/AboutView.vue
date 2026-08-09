@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { activeRole } from '@/auth'
 import { getLibraryStats, getRequestEntries, getRoleLabel, updateRequestStatus } from '@/libraryStore'
@@ -14,12 +14,67 @@ const exportMessage = ref('')
 const isStaffHub = computed(() => route.name === 'StaffHub')
 const canApproveRequests = computed(() => activeRole.value === 'Manager')
 const statusOptions = ['All', 'Pending', 'In review', 'Approved', 'Closed']
+const requestFilters = ref({
+  fullName: '',
+  email: '',
+  requestType: '',
+  branch: '',
+  status: ''
+})
+const requestSortKey = ref('createdAt')
+const requestSortDirection = ref('desc')
+const requestPage = ref(1)
+const requestPageSize = 10
+
+const normalize = (value) => String(value ?? '').trim().toLowerCase()
+
+const compareRequests = (a, b, key) => {
+  const direction = requestSortDirection.value === 'asc' ? 1 : -1
+
+  if (key === 'createdAt') {
+    return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction
+  }
+
+  return String(a[key] ?? '').localeCompare(String(b[key] ?? ''), undefined, {
+    numeric: true,
+    sensitivity: 'base'
+  }) * direction
+}
 
 const filteredRequests = computed(() =>
   selectedStatus.value === 'All'
     ? requests.value
     : requests.value.filter((request) => request.status === selectedStatus.value)
 )
+
+const interactiveRequests = computed(() => {
+  const rows = filteredRequests.value.filter((request) => {
+    const matchesName =
+      !requestFilters.value.fullName || normalize(request.fullName).includes(normalize(requestFilters.value.fullName))
+    const matchesEmail =
+      !requestFilters.value.email || normalize(request.email).includes(normalize(requestFilters.value.email))
+    const matchesType =
+      !requestFilters.value.requestType ||
+      normalize(request.requestType).includes(normalize(requestFilters.value.requestType))
+    const matchesBranch =
+      !requestFilters.value.branch || normalize(request.branch).includes(normalize(requestFilters.value.branch))
+    const matchesStatus =
+      !requestFilters.value.status || normalize(request.status).includes(normalize(requestFilters.value.status))
+
+    return matchesName && matchesEmail && matchesType && matchesBranch && matchesStatus
+  })
+
+  return rows.sort((first, second) => compareRequests(first, second, requestSortKey.value))
+})
+
+const requestPageCount = computed(() =>
+  Math.max(1, Math.ceil(interactiveRequests.value.length / requestPageSize))
+)
+
+const requestPageRows = computed(() => {
+  const start = (requestPage.value - 1) * requestPageSize
+  return interactiveRequests.value.slice(start, start + requestPageSize)
+})
 
 const refreshStaffData = () => {
   stats.value = getLibraryStats()
@@ -52,6 +107,49 @@ const exportRequestsCsv = () => {
   )
   exportMessage.value = 'CSV export created successfully.'
 }
+
+const toggleRequestSort = (key) => {
+  if (requestSortKey.value === key) {
+    requestSortDirection.value = requestSortDirection.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+
+  requestSortKey.value = key
+  requestSortDirection.value = 'asc'
+}
+
+const requestSortIndicator = (key) =>
+  requestSortKey.value === key ? (requestSortDirection.value === 'asc' ? '▲' : '▼') : ''
+
+const clearRequestFilters = () => {
+  requestFilters.value = {
+    fullName: '',
+    email: '',
+    requestType: '',
+    branch: '',
+    status: ''
+  }
+  selectedStatus.value = 'All'
+  requestPage.value = 1
+}
+
+watch(
+  [requestFilters, selectedStatus],
+  () => {
+    requestPage.value = 1
+  },
+  { deep: true }
+)
+
+watch(
+  interactiveRequests,
+  () => {
+    if (requestPage.value > requestPageCount.value) {
+      requestPage.value = requestPageCount.value
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -97,25 +195,33 @@ const exportRequestsCsv = () => {
 
           <p v-if="actionMessage" class="alert alert-success mt-3">{{ actionMessage }}</p>
           <p v-if="exportMessage" class="alert alert-success mt-3">{{ exportMessage }}</p>
-          <div class="mt-3">
+          <div class="table-toolbar mt-3">
+            <input v-model="requestFilters.fullName" class="form-control" placeholder="Search member" />
+            <input v-model="requestFilters.email" class="form-control" placeholder="Search email" />
+            <input v-model="requestFilters.requestType" class="form-control" placeholder="Search request type" />
+            <input v-model="requestFilters.branch" class="form-control" placeholder="Search hub" />
+            <input v-model="requestFilters.status" class="form-control" placeholder="Search status" />
+            <button type="button" class="btn btn-outline-dark btn-sm" @click="clearRequestFilters">
+              Clear filters
+            </button>
             <button type="button" class="btn btn-dark btn-sm" @click="exportRequestsCsv">
               Export requests CSV
             </button>
           </div>
 
           <div class="table-wrap mt-3">
-            <table class="data-table">
+            <table class="table-table">
               <thead>
                 <tr>
-                  <th>Community member</th>
-                  <th>Request</th>
-                  <th>Hub</th>
-                  <th>Status</th>
+                  <th><button type="button" @click="toggleRequestSort('fullName')">Community member {{ requestSortIndicator('fullName') }}</button></th>
+                  <th><button type="button" @click="toggleRequestSort('requestType')">Request {{ requestSortIndicator('requestType') }}</button></th>
+                  <th><button type="button" @click="toggleRequestSort('branch')">Hub {{ requestSortIndicator('branch') }}</button></th>
+                  <th><button type="button" @click="toggleRequestSort('status')">Status {{ requestSortIndicator('status') }}</button></th>
                   <th>Staff action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="request in filteredRequests" :key="request.id">
+                <tr v-for="request in requestPageRows" :key="request.id">
                   <td>
                     <strong>{{ request.fullName }}</strong>
                     <div class="small text-muted">{{ request.email }}</div>
@@ -152,11 +258,24 @@ const exportRequestsCsv = () => {
                     </div>
                   </td>
                 </tr>
-                <tr v-if="!filteredRequests.length">
+                <tr v-if="!requestPageRows.length">
                   <td colspan="5" class="text-muted">No service requests match this filter.</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div class="pagination-bar mt-3">
+            <div class="small text-muted">
+              Showing {{ requestPageRows.length }} row(s) on page {{ requestPage }} of {{ requestPageCount }}. Page size: 10.
+            </div>
+            <div class="pagination-group">
+              <button type="button" class="btn btn-outline-dark btn-sm" :disabled="requestPage === 1" @click="requestPage -= 1">
+                Previous
+              </button>
+              <button type="button" class="btn btn-outline-dark btn-sm" :disabled="requestPage === requestPageCount" @click="requestPage += 1">
+                Next
+              </button>
+            </div>
           </div>
           <p class="small text-muted mt-3 mb-0">
             Program managers can approve requests. Support workers can move requests into review or

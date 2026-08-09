@@ -185,6 +185,42 @@ onMounted(loadCloudSummary)
             </p>
           </div>
         </div>
+
+        <div class="status-grid mt-4">
+          <div class="status-card">
+            <h3 class="h5">Email workflow</h3>
+            <p class="mb-0">
+              Validate a support email, attach a summary file, and either send it through the cloud workflow or open your mail client.
+            </p>
+            <router-link to="/contact" class="btn btn-outline-dark btn-sm mt-3">
+              Open email workflow
+            </router-link>
+          </div>
+          <div class="status-card">
+            <h3 class="h5">Map & travel</h3>
+            <p class="mb-0">
+              Search support hubs, use your location, and open directions from the embedded map view.
+            </p>
+            <router-link to="/map" class="btn btn-outline-dark btn-sm mt-3">
+              Open map view
+            </router-link>
+          </div>
+          <div class="status-card">
+            <h3 class="h5">CSV export</h3>
+            <p class="mb-0">
+              Export the resource directory or staff request table as CSV for reporting and review.
+            </p>
+            <router-link to="/catalog" class="btn btn-outline-dark btn-sm mt-3">
+              Review directory
+            </router-link>
+          </div>
+          <div class="status-card">
+            <h3 class="h5">Cloud summary</h3>
+            <p class="mb-0">
+              The home page loads a live summary snapshot through the serverless endpoint and falls back safely if needed.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
